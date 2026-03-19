@@ -64,4 +64,73 @@ export const PLATFORM_MANIFEST: Record<string, PlatformDef> = {
       { key: 'subreddit', label: 'SUBREDDIT', secret: false, placeholder: 'r/programming' },
     ],
   },
+  devto: {
+    label: 'Dev.to',
+    description: 'Developer blogging platform',
+    fields: [
+      { key: 'api_key', label: 'API KEY', secret: true, placeholder: 'dev.to API key' },
+    ],
+  },
+  hashnode: {
+    label: 'Hashnode',
+    description: 'Developer blogging platform',
+    fields: [
+      { key: 'access_token', label: 'ACCESS TOKEN', secret: true, placeholder: 'Hashnode personal access token' },
+      { key: 'publication_id', label: 'PUBLICATION ID', secret: false, placeholder: 'Your publication/blog ID' },
+    ],
+  },
+  hackernews: {
+    label: 'Hacker News',
+    description: 'Y Combinator tech forum',
+    fields: [
+      { key: 'username', label: 'USERNAME', secret: false },
+      { key: 'password', label: 'PASSWORD', secret: true },
+    ],
+  },
+  facebook: {
+    label: 'Facebook',
+    description: 'Facebook Page post',
+    fields: [
+      { key: 'page_access_token', label: 'PAGE ACCESS TOKEN', secret: true },
+      { key: 'page_id', label: 'PAGE ID', secret: false },
+    ],
+  },
+  instagram: {
+    label: 'Instagram',
+    description: 'Instagram Business post',
+    fields: [
+      { key: 'access_token', label: 'ACCESS TOKEN', secret: true, placeholder: 'Instagram Graph API token' },
+      { key: 'account_id', label: 'ACCOUNT ID', secret: false, placeholder: 'Instagram Business account ID' },
+    ],
+  },
+  threads: {
+    label: 'Threads',
+    description: 'Meta Threads',
+    fields: [
+      { key: 'access_token', label: 'ACCESS TOKEN', secret: true, placeholder: 'Threads API token' },
+      { key: 'user_id', label: 'USER ID', secret: false },
+    ],
+  },
+  tiktok: {
+    label: 'TikTok',
+    description: 'TikTok text/photo post',
+    fields: [
+      { key: 'access_token', label: 'ACCESS TOKEN', secret: true, placeholder: 'TikTok Content Posting API token' },
+    ],
+  },
+  medium: {
+    label: 'Medium',
+    description: 'General-audience blogging',
+    fields: [
+      { key: 'integration_token', label: 'INTEGRATION TOKEN', secret: true, placeholder: 'Medium integration token' },
+    ],
+  },
+  youtube: {
+    label: 'YouTube Community',
+    description: 'YouTube Community post',
+    fields: [
+      { key: 'access_token', label: 'ACCESS TOKEN', secret: true, placeholder: 'YouTube OAuth token' },
+      { key: 'channel_id', label: 'CHANNEL ID', secret: false },
+    ],
+  },
 };

@@ -174,14 +174,16 @@ Zero changes to `pipeline/`, `webhook/`, or `philosophy/`.
 
 ## Platforms
 
-| Platform | Status |
-|----------|--------|
-| LinkedIn | ready |
-| Bluesky | stub |
-| X/Twitter | stub |
-| Discord | stub |
-| Mastodon | stub |
-| Reddit | stub |
+| Platform | Status | Platform | Status |
+|----------|--------|----------|--------|
+| Bluesky | stub | LinkedIn | ready |
+| Dev.to | ready | Mastodon | stub |
+| Discord | stub | Medium | ready |
+| Facebook | ready | Reddit | stub |
+| Hacker News | stub | Threads | ready |
+| Hashnode | ready | TikTok | stub |
+| Instagram | stub | X/Twitter | stub |
+| YouTube Community | stub | | |
 
 ---
 
