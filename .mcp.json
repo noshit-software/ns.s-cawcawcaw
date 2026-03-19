@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "knightsrook": {
+      "type": "url",
+      "url": "https://mcp.knightsrook.com/mcp"
+    }
+  }
+}

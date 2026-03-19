@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CAWCAWCAW</title>
+  <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:     #000000;
+      --fg:     #33FF33;
+      --dim:    #1A661A;
+      --bright: #80FF80;
+      --glow:   rgba(51,255,51,0.45);
+      --red:    #FF3333;
+      --amber:  #FFAA00;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { background: var(--bg); color: var(--fg); font-family: 'VT323', monospace; font-size: 20px; line-height: 1.4; min-height: 100vh; }
+    body { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem 1rem 3rem; text-shadow: 0 0 6px var(--glow); }
+    body::after { content:''; position:fixed; inset:0; background:repeating-linear-gradient(0deg,transparent 0px,transparent 2px,rgba(0,0,0,.13) 2px,rgba(0,0,0,.13) 4px); pointer-events:none; z-index:9999; }
+
+    .screen { width:100%; max-width:760px; position:relative; z-index:1; }
+
+    /* BACKGROUND CROW */
+    .crow-bg { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; pointer-events:none; z-index:0; overflow:hidden; }
+    .crow-bg pre { font-family:'VT323', monospace; font-size:14px; line-height:1.15; color:var(--fg); opacity:.07; white-space:pre; user-select:none; }
+
+    /* HEADER */
+    .header { display:flex; justify-content:space-between; align-items:baseline; border-bottom:1px solid var(--dim); padding-bottom:.3rem; margin-bottom:.6rem; }
+    .logo { font-size:1.8em; letter-spacing:.18em; color:var(--bright); }
+    .brand { font-size:.85em; color:var(--dim); letter-spacing:.12em; }
+
+    @keyframes blink { 0%,49%{opacity:1} 50%,100%{opacity:0} }
+    .cursor { display:inline-block; width:.55em; height:1em; background:var(--fg); vertical-align:text-bottom; animation:blink 1s step-end infinite; margin-left:1px; }
+
+    /* TABS */
+    .tabs { display:flex; gap:1.8rem; border-bottom:1px solid var(--dim); padding-bottom:.3rem; margin-bottom:.75rem; flex-wrap:wrap; }
+    .tab { background:none; border:none; font:inherit; text-shadow:inherit; color:var(--dim); letter-spacing:.09em; cursor:pointer; padding:0; border-bottom:2px solid transparent; margin-bottom:-4px; }
+    .tab .k { color:var(--dim); margin-right:.3em; }
+    .tab:hover { color:var(--fg); }
+    .tab.active { color:var(--bright); border-bottom-color:var(--fg); }
+    .tab.active .k { color:var(--fg); }
+
+    .panel { display:none; } .panel.active { display:block; }
+    .slabel { color:var(--dim); font-size:.85em; letter-spacing:.1em; text-transform:uppercase; margin-bottom:.4rem; }
+    hr { border:none; border-top:1px solid var(--dim); margin:.8rem 0; }
+
+    /* PLATFORM LIST */
+    .platform-row { display:grid; grid-template-columns:1.2em 14em 1fr; gap:.8rem; align-items:center; padding:.28rem 0; border-bottom:1px solid rgba(51,255,51,.07); cursor:pointer; }
+    .platform-row:hover .pname { color:var(--bright); }
+    .parrow { color:var(--dim); text-align:center; }
+    .platform-row.selected .parrow { color:var(--bright); }
+    .pname { letter-spacing:.08em; }
+    .platform-row.ok .pname { color:var(--fg); }
+    .platform-row:not(.ok) .pname { color:var(--dim); }
+    .pstatus { font-size:.85em; }
+    .platform-row.ok .pstatus { color:var(--dim); }
+    .platform-row:not(.ok) .pstatus { color:var(--dim); opacity:.45; }
+
+    /* CONFIG FORM */
+    .config-form { margin-top:1rem; border-top:1px solid var(--dim); padding-top:.8rem; }
+    .config-title { color:var(--bright); letter-spacing:.14em; margin-bottom:.8rem; }
+    .field-row { display:flex; align-items:center; gap:.6rem; margin-bottom:.55rem; }
+    .flabel { width:18em; color:var(--dim); letter-spacing:.06em; flex-shrink:0; }
+    .farrow { color:var(--dim); flex-shrink:0; }
+    .finput { flex:1; background:transparent; border:none; border-bottom:1px solid var(--dim); color:var(--fg); font:inherit; text-shadow:inherit; padding:.1rem .3rem; outline:none; letter-spacing:.04em; min-width:0; }
+    .finput:focus { border-bottom-color:var(--fg); color:var(--bright); }
+    .finput::placeholder { color:var(--dim); opacity:.45; }
+    .form-actions { display:flex; gap:1.5rem; margin-top:1rem; flex-wrap:wrap; }
+    .btn { background:transparent; border:1px solid var(--dim); color:var(--fg); font:inherit; text-shadow:inherit; padding:.1rem .9rem; cursor:pointer; letter-spacing:.1em; }
+    .btn:hover { background:var(--fg); color:var(--bg); text-shadow:none; }
+    .btn-primary { border-color:var(--fg); color:var(--bright); }
+    .btn-danger { color:var(--dim); }
+    .btn-approve { border-color:var(--bright); color:var(--bright); }
+    .btn-reject { border-color:var(--red); color:var(--red); }
+    .btn-reject:hover { background:var(--red); color:var(--bg); }
+    .status-msg { margin-top:.5rem; min-height:1.4em; font-size:.9em; letter-spacing:.07em; }
+    .status-msg.ok { color:var(--bright); }
+    .status-msg.err { color:var(--red); text-shadow:0 0 6px rgba(255,51,51,.4); }
+
+    /* QUEUE */
+    .queue-entry { border:1px solid rgba(51,255,51,.12); padding:.6rem .8rem; margin-bottom:.6rem; cursor:pointer; }
+    .queue-entry:hover { border-color:var(--dim); }
+    .queue-entry.expanded { border-color:var(--dim); }
+    .qe-header { display:grid; grid-template-columns:8em 1fr auto; gap:.8rem; align-items:baseline; }
+    .qe-project { color:var(--dim); font-size:.85em; }
+    .qe-headline { color:var(--fg); }
+    .qe-meta { display:flex; gap:1rem; font-size:.8em; color:var(--dim); }
+    .qe-status { letter-spacing:.06em; }
+    .qe-status.pending_review { color:var(--amber); }
+    .qe-status.approved { color:var(--bright); }
+    .qe-status.published { color:var(--dim); }
+    .qe-status.rejected { color:var(--red); }
+    .qe-body { margin-top:.6rem; padding-top:.6rem; border-top:1px solid rgba(51,255,51,.08); color:var(--dim); font-size:.9em; line-height:1.5; white-space:pre-wrap; display:none; }
+    .queue-entry.expanded .qe-body { display:block; }
+    .qe-actions { margin-top:.6rem; display:flex; gap:1rem; }
+    .qe-platforms { font-size:.8em; color:var(--dim); margin-top:.3rem; }
+    .empty { color:var(--dim); padding:.8rem 0; letter-spacing:.06em; }
+
+    /* PROJECTS */
+    .project-entry { border:1px solid rgba(51,255,51,.12); padding:.6rem .8rem; margin-bottom:.6rem; }
+    .pe-header { display:flex; justify-content:space-between; align-items:baseline; cursor:pointer; }
+    .pe-name { color:var(--fg); letter-spacing:.08em; }
+    .pe-summary { color:var(--dim); font-size:.85em; }
+    .pe-body { margin-top:.75rem; padding-top:.75rem; border-top:1px solid rgba(51,255,51,.08); display:none; }
+    .project-entry.expanded .pe-body { display:block; }
+    .pe-field { display:flex; align-items:center; gap:.6rem; margin-bottom:.5rem; }
+    .pe-label { width:14em; color:var(--dim); flex-shrink:0; letter-spacing:.06em; }
+    .pe-input { flex:1; background:transparent; border:none; border-bottom:1px solid var(--dim); color:var(--fg); font:inherit; text-shadow:inherit; padding:.1rem .3rem; outline:none; min-width:0; }
+    .pe-input:focus { border-bottom-color:var(--fg); color:var(--bright); }
+    .pe-input::placeholder { color:var(--dim); opacity:.45; }
+    .pe-toggle { display:flex; align-items:center; gap:.8rem; }
+    .pe-checkbox { width:1em; height:1em; accent-color:var(--fg); cursor:pointer; }
+    .platform-checks { display:flex; flex-wrap:wrap; gap:.6rem 1.5rem; margin-top:.3rem; }
+    .platform-check { display:flex; align-items:center; gap:.4rem; cursor:pointer; color:var(--dim); }
+    .platform-check input { accent-color:var(--fg); }
+    .platform-check.checked { color:var(--fg); }
+
+    /* CATCHUP */
+    .catchup-form { margin-top:1.2rem; border-top:1px solid var(--dim); padding-top:.8rem; display:none; }
+    .catchup-form.open { display:block; }
+
+    /* ACTIVITY */
+    .activity-entry { display:grid; grid-template-columns:6em 1fr auto; gap:.8rem; align-items:baseline; padding:.25rem 0; border-bottom:1px solid rgba(51,255,51,.07); font-size:.9em; }
+    .atime { color:var(--dim); }
+    .aproject { color:var(--fg); }
+    .aresult.posted { color:var(--bright); }
+    .aresult.skipped { color:var(--dim); }
+    .areason { grid-column:1/-1; color:var(--dim); font-size:.85em; margin-top:-.1rem; margin-bottom:.1rem; }
+
+    /* SYSTEM */
+    .sys-row { display:flex; gap:1.5rem; padding:.25rem 0; border-bottom:1px solid rgba(51,255,51,.07); }
+    .skey { color:var(--dim); width:16em; flex-shrink:0; letter-spacing:.06em; }
+    .sval { color:var(--fg); } .sval.ok { color:var(--bright); } .sval.warn { color:var(--amber); }
+
+    ::-webkit-scrollbar { width:6px; } ::-webkit-scrollbar-track { background:var(--bg); } ::-webkit-scrollbar-thumb { background:var(--dim); border-radius:3px; } ::-webkit-scrollbar-thumb:hover { background:var(--fg); }
+    @media(max-width:600px) { body { font-size:17px; padding:1rem .75rem 2rem; } .tabs { gap:1.2rem; } .crow-bg pre { font-size:10px; } }
+  </style>
+</head>
+<body>
+<div class="crow-bg"><pre>
+      ******       ***
+           *****     ****
+               ****    *********
+                  ***       ******
+                    ***    *********
+                      ***  ***********
+                        **********  *************
+                         *** ****               ****
+                          ***                     ****
+                         ****                        *****
+            ***************                             *****
+  ************                                              ****
+*** ********                                                   ***
+*****      *********                                             ***
+                   ****                                           ***
+                      *****                                         **
+                          ****                                       **
+                             **                                       **
+                              **                                       ***
+                               **                                        **
+                                *                                         ***
+                                **                                          ***
+                                 *                                            ****
+                                 **                                              ***
+                                  *                                                 ****
+                                  ****                                                 *********
+                                    *****                                                    ****
+                                        ****                                                ***
+                                           ****                                              ******
+                                             ***    *******      ****                  ****     ****
+                                              **  ***    **   **** ***                  ***********
+                                             ******      **  ***     ***                    ***
+                                            ******      ******        ***             **     **
+                                            *****      ******          ****     ***   *********
+                                         *********    *** **              **************
+                                  **************** ***** ***
+                               ***************   *********
+                                ************  ************
+                                  *********   ***********
+</pre></div>
+<div class="screen">
+
+  <div class="header">
+    <span class="logo">]CAWCAWCAW<span class="cursor"></span></span>
+    <span class="brand">NOSHIT SOFTWARE</span>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="platforms" onclick="switchTab('platforms')"><span class="k">[1]</span>PLATFORMS</button>
+    <button class="tab" data-tab="queue" onclick="switchTab('queue')"><span class="k">[2]</span>QUEUE</button>
+    <button class="tab" data-tab="projects" onclick="switchTab('projects')"><span class="k">[3]</span>PROJECTS</button>
+    <button class="tab" data-tab="activity" onclick="switchTab('activity')"><span class="k">[4]</span>ACTIVITY</button>
+    <button class="tab" data-tab="system" onclick="switchTab('system')"><span class="k">[5]</span>SYSTEM</button>
+  </div>
+
+  <!-- [1] PLATFORMS -->
+  <div class="panel active" id="panel-platforms">
+    <div class="slabel" id="plat-summary">LOADING...</div>
+    <div id="plat-list"></div>
+    <div class="config-form" id="config-form" style="display:none">
+      <div class="config-title" id="config-title">CONFIGURE: ...</div>
+      <div id="config-fields"></div>
+      <div class="form-actions">
+        <button class="btn btn-primary" onclick="savePlatform()">SAVE</button>
+        <button class="btn btn-danger" onclick="clearPlatform()">CLEAR</button>
+        <button class="btn" onclick="closeConfig()">CANCEL</button>
+      </div>
+      <div class="status-msg" id="plat-status"></div>
+    </div>
+  </div>
+
+  <!-- [2] QUEUE -->
+  <div class="panel" id="panel-queue">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:.4rem">
+      <div class="slabel" id="queue-summary">QUEUE</div>
+      <div style="display:flex;gap:1rem">
+        <select id="queue-filter" onchange="loadQueue()" style="background:transparent;border:none;border-bottom:1px solid var(--dim);color:var(--dim);font:inherit;text-shadow:inherit;outline:none;cursor:pointer;font-size:.85em">
+          <option value="">ALL PROJECTS</option>
+        </select>
+        <select id="queue-status-filter" onchange="loadQueue()" style="background:transparent;border:none;border-bottom:1px solid var(--dim);color:var(--dim);font:inherit;text-shadow:inherit;outline:none;cursor:pointer;font-size:.85em">
+          <option value="">ALL STATUSES</option>
+          <option value="pending_review">PENDING REVIEW</option>
+          <option value="approved">APPROVED</option>
+          <option value="published">PUBLISHED</option>
+          <option value="rejected">REJECTED</option>
+        </select>
+      </div>
+    </div>
+    <div id="queue-list"><div class="empty">QUEUE IS EMPTY.</div></div>
+  </div>
+
+  <!-- [3] PROJECTS -->
+  <div class="panel" id="panel-projects">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:.4rem">
+      <div class="slabel">PROJECT CONFIGURATION</div>
+      <div style="display:flex;gap:.8rem;align-items:center">
+        <input id="new-project-name" class="finput" style="width:16em" placeholder="project-name" spellcheck="false" autocomplete="off" />
+        <button class="btn btn-primary" onclick="addProject()" style="white-space:nowrap">+ ADD</button>
+      </div>
+    </div>
+    <div id="project-list"><div class="empty">NO PROJECTS CONFIGURED.</div></div>
+  </div>
+
+  <!-- [4] ACTIVITY -->
+  <div class="panel" id="panel-activity">
+    <div class="slabel">RECENT PIPELINE RUNS</div>
+    <div id="activity-list"><div class="empty">NO ACTIVITY YET.</div></div>
+  </div>
+
+  <!-- [5] SYSTEM -->
+  <div class="panel" id="panel-system">
+    <div class="slabel">SERVER STATUS</div>
+    <div id="sys-info"><div class="empty">LOADING...</div></div>
+  </div>
+
+</div>
+<script>
+'use strict';
+
+let platforms = [];
+let allPlatformNames = [];
+let selectedPlatform = null;
+let expandedQueue = new Set();
+let expandedProjects = new Set();
+let projects = {};
+
+// ── TABS ──────────────────────────────────────────────────────
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+  document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + tab));
+  if (tab === 'queue') loadQueue();
+  if (tab === 'projects') loadProjects();
+  if (tab === 'activity') loadActivity();
+  if (tab === 'system') loadSystem();
+}
+
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+  if (e.key === '1') switchTab('platforms');
+  if (e.key === '2') switchTab('queue');
+  if (e.key === '3') switchTab('projects');
+  if (e.key === '4') switchTab('activity');
+  if (e.key === '5') switchTab('system');
+  if (e.key === 'Escape') closeConfig();
+});
+
+// ── PLATFORMS ─────────────────────────────────────────────────
+async function loadPlatforms() {
+  try {
+    const res = await fetch('/api/platforms');
+    platforms = await res.json();
+    allPlatformNames = platforms.map(p => p.name);
+    const configured = platforms.filter(p => p.configured).length;
+    document.getElementById('plat-summary').textContent = `PLATFORMS  ▸  ${configured} CONFIGURED / ${platforms.length} AVAILABLE`;
+    document.getElementById('plat-list').innerHTML = platforms.map(p => `
+      <div class="platform-row ${p.configured ? 'ok' : ''}" id="row-${p.name}" onclick="selectPlatform('${p.name}')">
+        <span class="parrow">${p.configured ? '►' : ' '}</span>
+        <span class="pname">${p.label.toUpperCase()}</span>
+        <span class="pstatus">${p.configured ? '████ CONFIGURED' : '░░░░ NOT CONFIGURED'}</span>
+      </div>`).join('');
+  } catch { document.getElementById('plat-summary').textContent = 'ERROR LOADING PLATFORMS.'; }
+}
+
+function selectPlatform(name) {
+  selectedPlatform = name;
+  const p = platforms.find(x => x.name === name);
+  if (!p) return;
+  document.querySelectorAll('.platform-row').forEach(r => r.classList.remove('selected'));
+  document.getElementById('row-' + name)?.classList.add('selected');
+  document.getElementById('config-title').textContent = 'CONFIGURE: ' + p.label.toUpperCase();
+  document.getElementById('config-fields').innerHTML = p.fields.map(f => `
+    <div class="field-row">
+      <span class="flabel">${f.label}</span><span class="farrow">▸</span>
+      <input class="finput" type="${f.secret ? 'password' : 'text'}" id="field-${f.key}"
+        placeholder="${f.placeholder || ''}" value="${f.configured ? '••••••••' : ''}"
+        autocomplete="off" spellcheck="false"/>
+    </div>`).join('');
+  clearMsg('plat-status');
+  document.getElementById('config-form').style.display = 'block';
+  document.getElementById('config-fields').querySelector('input')?.focus();
+}
+
+function closeConfig() {
+  document.getElementById('config-form').style.display = 'none';
+  document.querySelectorAll('.platform-row').forEach(r => r.classList.remove('selected'));
+  selectedPlatform = null;
+}
+
+async function savePlatform() {
+  if (!selectedPlatform) return;
+  const p = platforms.find(x => x.name === selectedPlatform);
+  if (!p) return;
+  const creds = {};
+  for (const f of p.fields) {
+    const el = document.getElementById('field-' + f.key);
+    if (el && el.value && el.value !== '••••••••') creds[f.key] = el.value;
+  }
+  try {
+    const res = await fetch('/api/platforms/' + selectedPlatform, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(creds) });
+    if (!res.ok) throw new Error((await res.json()).error || res.statusText);
+    setMsg('plat-status', 'SAVED.', 'ok');
+    await loadPlatforms();
+    document.getElementById('row-' + selectedPlatform)?.classList.add('selected');
+  } catch(e) { setMsg('plat-status', 'ERROR: ' + e.message, 'err'); }
+}
+
+async function clearPlatform() {
+  if (!selectedPlatform) return;
+  try {
+    await fetch('/api/platforms/' + selectedPlatform, { method:'DELETE' });
+    setMsg('plat-status', 'CLEARED.', 'ok');
+    await loadPlatforms();
+    closeConfig();
+  } catch(e) { setMsg('plat-status', 'ERROR: ' + e.message, 'err'); }
+}
+
+// ── QUEUE ─────────────────────────────────────────────────────
+async function loadQueue() {
+  try {
+    const project = document.getElementById('queue-filter').value;
+    const status = document.getElementById('queue-status-filter').value;
+    const url = '/api/queue' + (project ? '?project=' + encodeURIComponent(project) : '');
+    const res = await fetch(url);
+    let posts = await res.json();
+    if (status) posts = posts.filter(p => p.status === status);
+
+    // Populate project filter
+    const allProjects = [...new Set(posts.map(p => p.project))];
+    const filterEl = document.getElementById('queue-filter');
+    const currentFilter = filterEl.value;
+    filterEl.innerHTML = '<option value="">ALL PROJECTS</option>' +
+      allProjects.map(p => `<option value="${p}" ${p===currentFilter?'selected':''}>${p.toUpperCase()}</option>`).join('');
+
+    const pending = posts.filter(p => p.status === 'pending_review').length;
+    const approved = posts.filter(p => p.status === 'approved').length;
+    document.getElementById('queue-summary').textContent =
+      `QUEUE  ▸  ${pending} PENDING REVIEW  /  ${approved} APPROVED  /  ${posts.length} TOTAL`;
+
+    const list = document.getElementById('queue-list');
+    if (!posts.length) { list.innerHTML = '<div class="empty">QUEUE IS EMPTY.</div>'; return; }
+
+    list.innerHTML = posts.map(post => {
+      const d = new Date(post.createdAt);
+      const date = d.toLocaleDateString('en-US', {month:'2-digit',day:'2-digit'});
+      const time = d.toLocaleTimeString('en-US', {hour12:false,hour:'2-digit',minute:'2-digit'});
+      const isExpanded = expandedQueue.has(post.id);
+      const platforms = post.platforms.length ? post.platforms.join(' / ').toUpperCase() : 'ALL PLATFORMS';
+      return `
+        <div class="queue-entry ${isExpanded ? 'expanded' : ''}" id="qe-${post.id}" onclick="toggleQueue('${post.id}')">
+          <div class="qe-header">
+            <span class="qe-project">${post.project}</span>
+            <span class="qe-headline">${post.draft.headline}</span>
+            <span class="qe-status ${post.status}">${post.status.replace('_',' ').toUpperCase()}</span>
+          </div>
+          <div class="qe-meta">
+            <span>${date} ${time}</span>
+            <span>${post.source.toUpperCase()}</span>
+            <span>${platforms}</span>
+          </div>
+          <div class="qe-body">${post.draft.body}
+
+TAGS: ${post.draft.tags.map(t=>'#'+t).join(' ')}
+PHILOSOPHY: ${post.draft.philosophyPoint}
+          </div>
+          ${isExpanded && (post.status === 'pending_review' || post.status === 'approved') ? `
+          <div class="qe-actions" onclick="event.stopPropagation()">
+            ${post.status === 'pending_review' ? `<button class="btn btn-approve" onclick="queueAction('${post.id}','approve')">APPROVE</button>` : ''}
+            ${post.status === 'pending_review' ? `<button class="btn btn-reject" onclick="queueAction('${post.id}','reject')">REJECT</button>` : ''}
+            ${post.status === 'approved' ? `<button class="btn btn-danger" onclick="queueAction('${post.id}','reject')">RESCIND</button>` : ''}
+            <button class="btn btn-danger" onclick="queueAction('${post.id}','delete')">DELETE</button>
+          </div>` : ''}
+        </div>`;
+    }).join('');
+  } catch(e) { document.getElementById('queue-list').innerHTML = '<div class="empty">ERROR LOADING QUEUE.</div>'; }
+}
+
+function toggleQueue(id) {
+  if (expandedQueue.has(id)) expandedQueue.delete(id);
+  else expandedQueue.add(id);
+  loadQueue();
+}
+
+async function queueAction(id, action) {
+  try {
+    if (action === 'delete') await fetch('/api/queue/' + id, {method:'DELETE'});
+    else await fetch('/api/queue/' + id + '/' + action, {method:'POST'});
+    await loadQueue();
+  } catch(e) { console.error(e); }
+}
+
+// ── PROJECTS ──────────────────────────────────────────────────
+async function loadProjects() {
+  try {
+    const res = await fetch('/api/projects');
+    projects = await res.json();
+    renderProjects();
+  } catch { document.getElementById('project-list').innerHTML = '<div class="empty">ERROR LOADING PROJECTS.</div>'; }
+}
+
+function renderProjects() {
+  const names = Object.keys(projects);
+  if (!names.length) { document.getElementById('project-list').innerHTML = '<div class="empty">NO PROJECTS CONFIGURED.</div>'; return; }
+
+  document.getElementById('project-list').innerHTML = names.map(name => {
+    const cfg = projects[name];
+    const isExpanded = expandedProjects.has(name);
+    const summary = [cfg.schedule, cfg.reviewRequired ? 'REVIEW ON' : 'AUTO', cfg.platforms.length ? cfg.platforms.join('/').toUpperCase() : 'ALL'].join('  ·  ');
+    return `
+      <div class="project-entry ${isExpanded ? 'expanded' : ''}" id="pe-${name}">
+        <div class="pe-header" onclick="toggleProject('${name}')">
+          <span class="pe-name">${name.toUpperCase()}</span>
+          <span class="pe-summary">${summary}</span>
+        </div>
+        <div class="pe-body">
+          <div class="pe-field">
+            <span class="pe-label">SCHEDULE</span>
+            <span class="farrow">▸</span>
+            <input class="pe-input" id="ps-schedule-${name}" value="${cfg.schedule}" placeholder="immediate / 09:00 / 09:00 weekdays" autocomplete="off" spellcheck="false" />
+          </div>
+          <div class="pe-field">
+            <span class="pe-label">REVIEW REQUIRED</span>
+            <span class="farrow">▸</span>
+            <div class="pe-toggle">
+              <input type="checkbox" class="pe-checkbox" id="ps-review-${name}" ${cfg.reviewRequired ? 'checked' : ''} />
+              <span style="color:var(--dim);font-size:.9em" id="ps-review-label-${name}">${cfg.reviewRequired ? 'ON' : 'OFF'}</span>
+            </div>
+          </div>
+          <div class="pe-field" style="align-items:flex-start">
+            <span class="pe-label" style="padding-top:.2rem">PLATFORMS</span>
+            <span class="farrow" style="padding-top:.2rem">▸</span>
+            <div class="platform-checks" id="ps-platforms-${name}">
+              ${allPlatformNames.map(p => `
+                <label class="platform-check ${cfg.platforms.includes(p) ? 'checked' : ''}">
+                  <input type="checkbox" value="${p}" ${cfg.platforms.includes(p) ? 'checked' : ''} onchange="updatePlatformLabel(this,'${name}')"/>
+                  ${p.toUpperCase()}
+                </label>`).join('')}
+              <span style="color:var(--dim);font-size:.8em">(empty = all configured)</span>
+            </div>
+          </div>
+          <div class="pe-field">
+            <span class="pe-label">REPO PATH</span>
+            <span class="farrow">▸</span>
+            <input class="pe-input" id="ps-repopath-${name}" value="${cfg.repoPath || ''}" placeholder="/path/to/repo" autocomplete="off" spellcheck="false" />
+          </div>
+          <div class="form-actions" style="margin-top:.8rem">
+            <button class="btn btn-primary" onclick="saveProject('${name}')">SAVE</button>
+            <button class="btn" onclick="runCatchup('${name}')" ${cfg.repoPath ? '' : 'disabled title="Set repo path first"'}>CATCHUP</button>
+          </div>
+          <div class="status-msg" id="ps-status-${name}"></div>
+        </div>
+      </div>`;
+  }).join('');
+
+  // Wire up review checkboxes
+  names.forEach(name => {
+    const cb = document.getElementById('ps-review-' + name);
+    if (cb) cb.addEventListener('change', () => {
+      document.getElementById('ps-review-label-' + name).textContent = cb.checked ? 'ON' : 'OFF';
+    });
+  });
+}
+
+function updatePlatformLabel(checkbox, name) {
+  checkbox.closest('.platform-check').classList.toggle('checked', checkbox.checked);
+}
+
+function toggleProject(name) {
+  if (expandedProjects.has(name)) expandedProjects.delete(name);
+  else expandedProjects.add(name);
+  renderProjects();
+}
+
+async function addProject() {
+  const name = document.getElementById('new-project-name').value.trim();
+  if (!name) return;
+  await fetch('/api/projects/' + encodeURIComponent(name), {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ schedule: 'immediate', reviewRequired: false, platforms: [] })
+  });
+  document.getElementById('new-project-name').value = '';
+  expandedProjects.add(name);
+  await loadProjects();
+}
+
+async function saveProject(name) {
+  const schedule = document.getElementById('ps-schedule-' + name).value.trim();
+  const reviewRequired = document.getElementById('ps-review-' + name).checked;
+  const platformChecks = document.querySelectorAll(`#ps-platforms-${name} input[type=checkbox]:checked`);
+  const platforms = [...platformChecks].map(c => c.value);
+  const repoPath = document.getElementById('ps-repopath-' + name).value.trim();
+  try {
+    const res = await fetch('/api/projects/' + encodeURIComponent(name), {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ schedule, reviewRequired, platforms, repoPath })
+    });
+    if (!res.ok) throw new Error(await res.text());
+    setMsg('ps-status-' + name, 'SAVED.', 'ok');
+    await loadProjects();
+  } catch(e) { setMsg('ps-status-' + name, 'ERROR: ' + e.message, 'err'); }
+}
+
+async function runCatchup(name) {
+  try {
+    setMsg('ps-status-' + name, 'READING GIT HISTORY... THIS MAY TAKE A MINUTE.', 'ok');
+    const res = await fetch('/api/catchup', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ project: name })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+    setMsg('ps-status-' + name, `RUNNING. ${data.commitsParsed} COMMITS. CHECK [2] QUEUE.`, 'ok');
+  } catch(e) { setMsg('ps-status-' + name, 'ERROR: ' + e.message, 'err'); }
+}
+
+// ── ACTIVITY ──────────────────────────────────────────────────
+async function loadActivity() {
+  try {
+    const res = await fetch('/api/activity');
+    const entries = await res.json();
+    const el = document.getElementById('activity-list');
+    if (!entries.length) { el.innerHTML = '<div class="empty">NO ACTIVITY YET.</div>'; return; }
+    el.innerHTML = entries.map(e => {
+      const d = new Date(e.timestamp);
+      const time = d.toLocaleTimeString('en-US', {hour12:false,hour:'2-digit',minute:'2-digit',second:'2-digit'});
+      const date = d.toLocaleDateString('en-US', {month:'2-digit',day:'2-digit'});
+      const rc = e.worthy ? 'posted' : 'skipped';
+      const rt = e.worthy ? '● POSTED' : '○ SKIPPED';
+      const plats = e.results?.length ? '  —  ' + e.results.map(r => r.platform.toUpperCase() + (r.success?' ✓':' ✗')).join('  ') : '';
+      return `<div class="activity-entry">
+        <span class="atime">${date} ${time}</span>
+        <span class="aproject">${e.project}</span>
+        <span class="aresult ${rc}">${rt}</span>
+        <span class="areason">${e.reason}${plats}</span>
+      </div>`;
+    }).join('');
+  } catch { document.getElementById('activity-list').innerHTML = '<div class="empty">ERROR LOADING ACTIVITY.</div>'; }
+}
+
+// ── SYSTEM ────────────────────────────────────────────────────
+async function loadSystem() {
+  try {
+    const res = await fetch('/health');
+    const d = await res.json();
+    const h = Math.floor(d.uptime/3600), m = Math.floor((d.uptime%3600)/60), s = d.uptime%60;
+    const uptime = `${String(h).padStart(2,'0')}H ${String(m).padStart(2,'0')}M ${String(s).padStart(2,'0')}S`;
+    document.getElementById('sys-info').innerHTML = `
+      <div class="sys-row"><span class="skey">SERVICE</span><span class="sval ok">${d.service.toUpperCase()}</span></div>
+      <div class="sys-row"><span class="skey">STATUS</span><span class="sval ok">${d.status.toUpperCase()}</span></div>
+      <div class="sys-row"><span class="skey">VERSION</span><span class="sval">${d.version}</span></div>
+      <div class="sys-row"><span class="skey">UPTIME</span><span class="sval ok">${uptime}</span></div>
+      <div class="sys-row"><span class="skey">SCHEDULER</span><span class="sval ok">RUNNING (60S INTERVAL)</span></div>
+      <div class="sys-row"><span class="skey">WEBHOOK ENDPOINT</span><span class="sval">/WEBHOOK/GITHUB</span></div>`;
+  } catch { document.getElementById('sys-info').innerHTML = '<div class="empty">ERROR REACHING SERVER.</div>'; }
+}
+
+// ── UTILS ─────────────────────────────────────────────────────
+function setMsg(id, msg, type) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = msg;
+  el.className = 'status-msg ' + type;
+}
+function clearMsg(id) { setMsg(id, '', ''); }
+
+// ── INIT ──────────────────────────────────────────────────────
+loadPlatforms();
+</script>
+</body>
+</html>
