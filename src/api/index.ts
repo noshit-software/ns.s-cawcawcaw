@@ -7,7 +7,7 @@ import { getQueue, updateStatus, updateDraft, removeFromQueue } from '../store/q
 import { getProjectConfig, setProjectConfig, getAllProjectConfigs } from '../store/project-config.js';
 import { fetchPhilosophy } from '../philosophy/client.js';
 import { getPostHistory } from '../store/post-history.js';
-import { runCatchup, readGitLog, getLatestCommitSha, getCommitCount } from '../pipeline/catchup.js';
+import { runCatchup, fetchGitHubCommits, getNewCommitCount } from '../pipeline/catchup.js';
 import { enqueue } from '../store/queue.js';
 import { updateNotes } from '../store/commit-buffer.js';
 import { publishNow } from '../pipeline/scheduler.js';
@@ -136,14 +136,13 @@ router.delete('/queue/:id', (req, res) => {
 
 // ── PROJECTS ─────────────────────────────────────────────────
 
-router.get('/projects', (_req, res) => {
+router.get('/projects', async (_req, res) => {
   const configs = getAllProjectConfigs();
-  // Enrich with new commit counts
   const enriched: Record<string, unknown> = {};
   for (const [name, cfg] of Object.entries(configs)) {
     let newCommits = 0;
-    if (cfg.repoPath && cfg.lastCatchupCommit) {
-      try { newCommits = getCommitCount(cfg.repoPath, cfg.lastCatchupCommit); } catch {}
+    if (cfg.githubRepo && cfg.lastCatchupCommit) {
+      try { newCommits = await getNewCommitCount(cfg.githubRepo, cfg.lastCatchupCommit); } catch {}
     }
     enriched[name] = { ...cfg, newCommits };
   }
@@ -155,15 +154,15 @@ router.get('/projects/:name', (req, res) => {
 });
 
 router.post('/projects/:name', (req, res) => {
-  const { schedule, reviewRequired, platforms, repoPath, philosophy, tagline } = req.body as {
+  const { schedule, reviewRequired, platforms, githubRepo, philosophy, tagline } = req.body as {
     schedule?: string;
     reviewRequired?: boolean;
     platforms?: string[];
-    repoPath?: string;
+    githubRepo?: string;
     philosophy?: string;
     tagline?: string;
   };
-  setProjectConfig(req.params.name, { schedule, reviewRequired, platforms, repoPath, philosophy, tagline });
+  setProjectConfig(req.params.name, { schedule, reviewRequired, platforms, githubRepo, philosophy, tagline });
   res.json({ ok: true });
 });
 
@@ -174,21 +173,24 @@ router.post('/catchup', async (req, res) => {
   if (!project) { res.status(400).json({ error: 'project is required' }); return; }
 
   const config = getProjectConfig(project);
-  if (!config.repoPath) {
-    res.status(400).json({ error: 'No repoPath configured for this project. Set it in the Projects tab first.' });
+  if (!config.githubRepo) {
+    res.status(400).json({ error: 'No GitHub repo configured. Set it in the Projects tab first.' });
     return;
   }
 
   let commits;
+  let latestSha: string;
   try {
-    commits = readGitLog(config.repoPath);
+    const result = await fetchGitHubCommits(config.githubRepo, config.lastCatchupCommit || undefined);
+    commits = result.commits;
+    latestSha = result.latestSha;
   } catch (err) {
-    res.status(400).json({ error: `Failed to read git log from ${config.repoPath}: ${err instanceof Error ? err.message : err}` });
+    res.status(400).json({ error: `Failed to fetch commits from GitHub: ${err instanceof Error ? err.message : err}` });
     return;
   }
 
   if (commits.length === 0) {
-    res.status(400).json({ error: 'No commits found in repo' });
+    res.status(400).json({ error: 'No new commits found' });
     return;
   }
 
@@ -206,11 +208,7 @@ router.post('/catchup', async (req, res) => {
       }
       if (notes) updateNotes(project, notes);
 
-      // Save latest commit SHA so we know catchup is current
-      try {
-        const sha = getLatestCommitSha(config.repoPath);
-        setProjectConfig(project, { lastCatchupCommit: sha });
-      } catch {}
+      setProjectConfig(project, { lastCatchupCommit: latestSha });
 
       console.log(`[catchup] ${project}: queued ${drafts.length} posts from ${commits.length} commits`);
     } catch (err) {

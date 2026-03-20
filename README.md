@@ -86,7 +86,7 @@ Press `3` for Projects → **+ ADD** your repo name → expand it and set:
 - **Schedule** — when the publish window opens: `05:00` (default), `09:00 weekdays`, `09:00 weekends`. One post per day total across all projects — oldest first.
 - **Review required** — if ON, posts sit at `pending_review` until you approve them in the Queue tab
 - **Platforms** — which platforms to post to (empty = all configured platforms)
-- **Repo path** — the local path to the git repo on this machine (used for catchup)
+- **GitHub repo** — `owner/repo` format (e.g. `robertgardunia/ns.s-cawcawcaw`) — used for catchup via GitHub API
 - **Philosophy** — tells Claude what voice and tone to use when writing posts
 - **Tagline** — appended to every post at publish time (e.g. `CAW.`)
 
@@ -133,7 +133,7 @@ If it waited, that's normal on the first push. It's building toward something. P
 
 If a repo has been active for a while, run catchup to get Claude up to speed and generate a backlog of drafts.
 
-1. Make sure the repo's **Repo path** is set in the Projects tab
+1. Make sure the repo's **GitHub repo** is set in the Projects tab (e.g. `owner/repo`)
 2. Click **CATCHUP**
 3. Server reads the full git history directly, Claude finds the narrative arcs, drafts get queued
 4. Go to `[2] QUEUE` to review and approve

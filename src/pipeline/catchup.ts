@@ -1,4 +1,3 @@
-import { execFileSync } from 'node:child_process';
 import { getClient, MODEL } from '../claude/client.js';
 import { type ProjectPhilosophy } from '../philosophy/client.js';
 import { type PostDraft } from '../publishers/types.js';
@@ -146,27 +145,74 @@ Quality over quantity. If the history only has one real story, queue one post. I
 }
 
 // Read git history directly from a local repo path
-export function getLatestCommitSha(repoPath: string): string {
-  return execFileSync('git', ['rev-parse', 'HEAD'], { cwd: repoPath, encoding: 'utf-8' }).trim();
+interface GitHubCommitResponse {
+  sha: string;
+  commit: { message: string; author: { name: string; date: string } };
 }
 
-export function getCommitCount(repoPath: string, sinceSha?: string): number {
+// Fetch commits from GitHub API — paginates to get all
+export async function fetchGitHubCommits(repo: string, sinceSha?: string): Promise<{ commits: CatchupCommit[]; latestSha: string }> {
+  const commits: CatchupCommit[] = [];
+  let latestSha = '';
+  let page = 1;
+  const perPage = 100;
+
+  while (true) {
+    const url = new URL(`https://api.github.com/repos/${repo}/commits`);
+    url.searchParams.set('per_page', String(perPage));
+    url.searchParams.set('page', String(page));
+    if (sinceSha) url.searchParams.set('since', ''); // we'll filter by sha below
+
+    const headers: Record<string, string> = { Accept: 'application/vnd.github+json' };
+    const ghToken = process.env.GITHUB_TOKEN;
+    if (ghToken) headers.Authorization = `Bearer ${ghToken}`;
+
+    const res = await fetch(url.toString(), { headers });
+    if (!res.ok) throw new Error(`GitHub API error ${res.status}: ${await res.text()}`);
+
+    const data = await res.json() as GitHubCommitResponse[];
+    if (data.length === 0) break;
+
+    if (page === 1 && data.length > 0) latestSha = data[0].sha;
+
+    for (const c of data) {
+      // Stop if we've reached the last catchup commit
+      if (sinceSha && c.sha === sinceSha) {
+        // Reverse so oldest is first
+        commits.reverse();
+        return { commits, latestSha };
+      }
+      commits.push({
+        message: c.commit.message.split('\n')[0], // first line only
+        author: c.commit.author.name,
+        date: c.commit.author.date,
+      });
+    }
+
+    if (data.length < perPage) break;
+    page++;
+  }
+
+  commits.reverse(); // oldest first
+  return { commits, latestSha };
+}
+
+// Count commits since a SHA via GitHub API
+export async function getNewCommitCount(repo: string, sinceSha: string): Promise<number> {
   if (!sinceSha) return 0;
   try {
-    const output = execFileSync('git', ['rev-list', '--count', sinceSha + '..HEAD'], { cwd: repoPath, encoding: 'utf-8' });
-    return parseInt(output.trim(), 10) || 0;
+    const url = `https://api.github.com/repos/${repo}/compare/${sinceSha}...HEAD`;
+    const headers: Record<string, string> = { Accept: 'application/vnd.github+json' };
+    const ghToken = process.env.GITHUB_TOKEN;
+    if (ghToken) headers.Authorization = `Bearer ${ghToken}`;
+
+    const res = await fetch(url, { headers });
+    if (!res.ok) return 0;
+    const data = await res.json() as { ahead_by: number };
+    return data.ahead_by;
   } catch {
     return 0;
   }
-}
-
-export function readGitLog(repoPath: string): CatchupCommit[] {
-  const output = execFileSync(
-    'git',
-    ['log', '--reverse', '--format=%s|%an|%ai'],
-    { cwd: repoPath, encoding: 'utf-8' }
-  );
-  return parseGitLog(output);
 }
 
 // Parse raw git log output into CatchupCommits

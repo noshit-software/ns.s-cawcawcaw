@@ -7,7 +7,7 @@ export interface ProjectConfig {
   schedule: string;       // 'immediate' | 'HH:MM' | 'HH:MM weekdays' | 'HH:MM weekends'
   reviewRequired: boolean;
   platforms: string[];    // empty = all configured platforms
-  repoPath: string;       // local path to the git repo for catchup
+  githubRepo: string;     // owner/repo — used for catchup via GitHub API
   philosophy: string;     // guiding philosophy for post generation
   tagline: string;        // fixed sign-off appended to every post
   lastCatchupCommit: string; // SHA of the last commit processed by catchup
@@ -17,7 +17,7 @@ export const DEFAULT_CONFIG: ProjectConfig = {
   schedule: '05:00',
   reviewRequired: false,
   platforms: [],
-  repoPath: '',
+  githubRepo: '',
   philosophy: '',
   tagline: '',
   lastCatchupCommit: '',

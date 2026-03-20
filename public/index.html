@@ -625,9 +625,9 @@ function renderProjects() {
             </div>
           </div>
           <div class="pe-field">
-            <span class="pe-label">REPO PATH</span>
+            <span class="pe-label">GITHUB REPO</span>
             <span class="farrow">▸</span>
-            <input class="pe-input" id="ps-repopath-${name}" value="${cfg.repoPath || ''}" placeholder="/path/to/repo" autocomplete="off" spellcheck="false" />
+            <input class="pe-input" id="ps-githubrepo-${name}" value="${cfg.githubRepo || ''}" placeholder="owner/repo" autocomplete="off" spellcheck="false" />
           </div>
           <div class="pe-field" style="align-items:flex-start">
             <span class="pe-label" style="padding-top:.2rem">PHILOSOPHY</span>
@@ -641,7 +641,7 @@ function renderProjects() {
           </div>
           <div class="form-actions" style="margin-top:.8rem">
             <button class="btn btn-primary" id="ps-save-${name}" onclick="saveProject('${name}')" ${projectSavedState[name] === false ? '' : 'disabled'}>SAVE</button>
-            <button class="btn" onclick="runCatchup('${name}')" ${!cfg.repoPath ? 'disabled title="Set repo path first"' : cfg.newCommits === 0 && cfg.lastCatchupCommit ? 'disabled' : ''}>${cfg.newCommits > 0 ? 'CATCHUP (' + cfg.newCommits + ' NEW)' : 'CATCHUP'}</button>
+            <button class="btn" onclick="runCatchup('${name}')" ${!cfg.githubRepo ? 'disabled title="Set GitHub repo first"' : cfg.newCommits === 0 && cfg.lastCatchupCommit ? 'disabled' : ''}>${cfg.newCommits > 0 ? 'CATCHUP (' + cfg.newCommits + ' NEW)' : 'CATCHUP'}</button>
             ${projectSavedState[name] === true ? '<span class="status-msg ok" style="margin-left:.5rem">SAVED</span>' : ''}
           </div>
           <div class="status-msg" id="ps-status-${name}"></div>
@@ -706,13 +706,13 @@ async function saveProject(name) {
   const reviewRequired = document.getElementById('ps-review-' + name).checked;
   const platformChecks = document.querySelectorAll(`#ps-platforms-${name} input[type=checkbox]:checked`);
   const platforms = [...platformChecks].map(c => c.value);
-  const repoPath = document.getElementById('ps-repopath-' + name).value.trim();
+  const githubRepo = document.getElementById('ps-githubrepo-' + name).value.trim();
   const philosophy = document.getElementById('ps-philosophy-' + name).value.trim();
   const tagline = document.getElementById('ps-tagline-' + name).value.trim();
   try {
     const res = await fetch('/api/projects/' + encodeURIComponent(name), {
       method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ schedule, reviewRequired, platforms, repoPath, philosophy, tagline })
+      body: JSON.stringify({ schedule, reviewRequired, platforms, githubRepo, philosophy, tagline })
     });
     if (!res.ok) throw new Error(await res.text());
     projectSavedState[name] = true;
