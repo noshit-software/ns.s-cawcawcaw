@@ -551,12 +551,14 @@ PHILOSOPHY: ${esc(post.draft.philosophyPoint)}
 }
 
 async function bulkAction(ids, action) {
-  for (const id of ids) {
-    try {
-      if (action === 'delete') await fetch('/api/queue/' + id, {method:'DELETE'});
-      else await fetch('/api/queue/' + id + '/' + action, {method:'POST'});
-    } catch {}
-  }
+  const summary = document.getElementById('queue-summary');
+  summary.textContent = `▸ ${action.toUpperCase()}ING ${ids.length} POSTS...`;
+  try {
+    await fetch('/api/queue/batch', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ ids, action })
+    });
+  } catch {}
   await loadQueue();
 }
 

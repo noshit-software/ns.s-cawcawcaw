@@ -129,6 +129,18 @@ router.patch('/queue/:id', (req, res) => {
   res.json({ ok: true });
 });
 
+router.post('/queue/batch', (req, res) => {
+  const { ids, action } = req.body as { ids: string[]; action: string };
+  if (!Array.isArray(ids) || !action) { res.status(400).json({ error: 'ids and action required' }); return; }
+  for (const id of ids) {
+    if (action === 'delete') removeFromQueue(id);
+    else if (action === 'approve') updateStatus(id, 'approved');
+    else if (action === 'reject') updateStatus(id, 'rejected');
+    else if (action === 'requeue') updateStatus(id, 'pending_review');
+  }
+  res.json({ ok: true, count: ids.length });
+});
+
 router.delete('/queue/:id', (req, res) => {
   removeFromQueue(req.params.id);
   res.json({ ok: true });

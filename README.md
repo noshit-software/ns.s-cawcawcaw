@@ -147,6 +147,8 @@ Click a post to expand it. **EDIT** to rewrite before approving. **APPROVE** to 
 
 **Gotcha:** DELETE removes the post permanently. RESCIND just moves it to rejected. RE-QUEUE puts rejected posts back to pending.
 
+Inline action buttons (✓ ✗ ×) appear on each row without expanding. Bulk actions at the top of the queue operate on all visible posts (filtered by project/status).
+
 ---
 
 ## How the narrative engine works
