@@ -15,7 +15,7 @@ export interface ProjectConfig {
 
 export const DEFAULT_CONFIG: ProjectConfig = {
   schedule: '05:00',
-  reviewRequired: false,
+  reviewRequired: true,
   platforms: [],
   githubRepo: '',
   philosophy: '',
