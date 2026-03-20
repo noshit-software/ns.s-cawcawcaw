@@ -130,6 +130,8 @@ For repos with existing history — run catchup to generate a backlog of drafts 
 
 **Gotcha:** Catchup uses the GitHub API, not webhooks. It needs a `GITHUB_TOKEN` in `.env` for private repos. Public repos work without one but will hit rate limits faster.
 
+**RESET CATCHUP** clears the commit history marker so the next catchup regenerates all posts from scratch. Use this if you deleted posts from the queue and want to regenerate them.
+
 ---
 
 ## The queue

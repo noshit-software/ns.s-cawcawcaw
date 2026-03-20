@@ -698,6 +698,7 @@ function renderProjects() {
           <div class="form-actions" style="margin-top:.8rem">
             <button class="btn btn-primary" id="ps-save-${name}" onclick="saveProject('${name}')" ${projectSavedState[name] === false ? '' : 'disabled'}>SAVE</button>
             <button class="btn" onclick="runCatchup('${name}')" ${!cfg.githubRepo ? 'disabled title="Set GitHub repo first"' : cfg.newCommits === 0 && cfg.lastCatchupCommit ? 'disabled' : ''}>${cfg.newCommits > 0 ? 'CATCHUP (' + cfg.newCommits + ' NEW)' : 'CATCHUP'}</button>
+            ${cfg.lastCatchupCommit ? `<button class="btn" onclick="resetCatchup('${name}')" title="Clear catchup history and regenerate all posts">RESET CATCHUP</button>` : ''}
             ${projectSavedState[name] === true ? '<span class="status-msg ok" id="ps-saved-' + name + '" style="margin-left:.5rem">SAVED</span>' : ''}
           </div>
           <div class="status-msg" id="ps-status-${name}"></div>
@@ -819,6 +820,18 @@ async function saveProject(name) {
     });
     if (!res.ok) throw new Error(await res.text());
     projectSavedState[name] = true;
+    await loadProjects();
+  } catch(e) { setMsg('ps-status-' + name, 'ERROR: ' + e.message, 'err'); }
+}
+
+async function resetCatchup(name) {
+  if (!confirm(`Reset catchup for ${name}? This clears the commit history marker so the next catchup regenerates all posts from scratch.`)) return;
+  try {
+    await fetch('/api/projects/' + encodeURIComponent(name), {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ lastCatchupCommit: '' })
+    });
+    setMsg('ps-status-' + name, 'CATCHUP RESET. HIT CATCHUP TO REGENERATE.', 'ok');
     await loadProjects();
   } catch(e) { setMsg('ps-status-' + name, 'ERROR: ' + e.message, 'err'); }
 }

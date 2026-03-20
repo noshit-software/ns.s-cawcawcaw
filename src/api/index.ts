@@ -166,7 +166,7 @@ router.get('/projects/:name', (req, res) => {
 });
 
 router.post('/projects/:name', (req, res) => {
-  const { schedule, reviewRequired, platforms, githubRepo, philosophy, voice, detailLevel, tagline } = req.body as {
+  const { schedule, reviewRequired, platforms, githubRepo, philosophy, voice, detailLevel, tagline, lastCatchupCommit } = req.body as {
     schedule?: string;
     reviewRequired?: boolean;
     platforms?: string[];
@@ -175,8 +175,9 @@ router.post('/projects/:name', (req, res) => {
     voice?: string;
     detailLevel?: string;
     tagline?: string;
+    lastCatchupCommit?: string;
   };
-  setProjectConfig(req.params.name, { schedule, reviewRequired, platforms, githubRepo, philosophy, voice, detailLevel, tagline });
+  setProjectConfig(req.params.name, { schedule, reviewRequired, platforms, githubRepo, philosophy, voice, detailLevel, tagline, lastCatchupCommit });
   res.json({ ok: true });
 });
 
