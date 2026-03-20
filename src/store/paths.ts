@@ -1,8 +1,9 @@
-import { homedir } from 'node:os';
-import { join } from 'node:path';
+import { join, dirname } from 'node:path';
 import { mkdirSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 
-export const CAWCAWCAW_DIR = join(homedir(), '.cawcawcaw');
+const __dirname = dirname(fileURLToPath(import.meta.url));
+export const CAWCAWCAW_DIR = join(__dirname, '..', '..', 'data');
 
 // Ensure directory exists on first import
 mkdirSync(CAWCAWCAW_DIR, { recursive: true });

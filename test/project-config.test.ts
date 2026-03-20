@@ -1,10 +1,9 @@
 import { describe, it, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert';
 import { readFileSync, writeFileSync, existsSync, unlinkSync } from 'node:fs';
-import { homedir } from 'node:os';
-import { join } from 'node:path';
+import { PATHS } from '../src/store/paths.js';
 
-const CONFIG_PATH = join(homedir(), '.cawcawcaw', 'projects.json');
+const CONFIG_PATH = PATHS.projects;
 
 // Save/restore the real config file around each test
 let originalContent: string | null = null;

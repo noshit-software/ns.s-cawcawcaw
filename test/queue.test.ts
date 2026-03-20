@@ -1,10 +1,9 @@
 import { describe, it, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert';
 import { readFileSync, writeFileSync, existsSync, unlinkSync } from 'node:fs';
-import { homedir } from 'node:os';
-import { join } from 'node:path';
+import { PATHS } from '../src/store/paths.js';
 
-const QUEUE_PATH = join(homedir(), '.cawcawcaw', 'queue.json');
+const QUEUE_PATH = PATHS.queue;
 
 let originalContent: string | null = null;
 

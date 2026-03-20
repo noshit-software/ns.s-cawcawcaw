@@ -56,7 +56,7 @@ npm run start:prod # production (node, needs build first)
 [scheduler] Started
 ```
 
-Runtime data lives in `~/.cawcawcaw/`. Created automatically on first run.
+Runtime data lives in `data/`. Created automatically on first run.
 
 ---
 
@@ -92,7 +92,7 @@ Both need approval. Share on LinkedIn can take a few hours. OpenID Connect is us
 
 Open `http://localhost:3000` → `[1] PLATFORMS` → click **LINKEDIN** → **CONNECT**.
 
-The OAuth flow handles everything — access token, refresh token, author URN. All stored in `~/.cawcawcaw/credentials.json`.
+The OAuth flow handles everything — access token, refresh token, author URN. All stored in `data/credentials.json`.
 
 **Gotcha:** LinkedIn access tokens expire in 60 days. Refresh tokens last a year. The app doesn't auto-refresh yet — if posts start failing after two months, click RECONNECT.
 
@@ -221,7 +221,7 @@ pm2 save && pm2 startup
 
 Put nginx or caddy in front for HTTPS if the UI needs to be reachable externally. The app sets `trust proxy` so it correctly reads `X-Forwarded-Proto` for OAuth redirect URIs behind reverse proxies (Cloudflare, nginx, etc.). **Keep the UI behind auth** — it exposes credential management.
 
-Runtime data in `~/.cawcawcaw/` — back it up. Specifically:
+Runtime data in `data/` — back it up. Specifically:
 - `credentials.json` — OAuth tokens
 - `projects.json` — project configs
 - `history.json` — published post log (prevents duplicate stories)
