@@ -227,7 +227,7 @@ router.post('/catchup', async (req, res) => {
     try {
       const philosophy = await fetchPhilosophy(project);
       const postHistory = getPostHistory(project);
-      const { drafts, notes } = await runCatchup(commits, philosophy, project, postHistory);
+      const { drafts, notes } = await runCatchup(commits, philosophy, project, postHistory, config.voice, config.detailLevel);
 
       for (const draft of drafts) {
         enqueue(project, draft, 'catchup', config.platforms, config.reviewRequired);

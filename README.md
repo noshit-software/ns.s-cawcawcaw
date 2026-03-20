@@ -87,7 +87,9 @@ Press `3` for Projects → **+ ADD** your repo name → expand it and set:
 - **Review required** — ON by default for new projects. Posts sit at `pending_review` until you approve them in the Queue tab. When OFF, posts are auto-approved and the scheduler will publish them at the next window
 - **Platforms** — which platforms to post to (empty = all configured platforms)
 - **GitHub repo** — `owner/repo` format (e.g. `noshit-software/ns.s-cawcawcaw`) — used for catchup via GitHub API. Hit **TEST** to verify the connection.
-- **Philosophy** — tells Claude what voice and tone to use when writing posts
+- **Philosophy** — tells Claude the project's guiding philosophy and narrative arc
+- **Voice** — writing voice/perspective per project (default: first person singular, present tense, confident). Override per project for different tones
+- **Detail level** — how deep posts should go: `high-level` (why, not what), `moderate` (what was built, not how), or `technical` (architecture and design decisions)
 - **Tagline** — appended to every post at publish time (e.g. `CAW.`)
 
 Hit **SAVE**. Projects can also be renamed or deleted from within their expanded view.

@@ -46,7 +46,9 @@ export async function runCatchup(
   commits: CatchupCommit[],
   philosophy: ProjectPhilosophy,
   projectName: string,
-  postHistory: PostRecord[]
+  postHistory: PostRecord[],
+  voice?: string,
+  detailLevel?: string
 ): Promise<CatchupResult> {
   const client = getClient();
 
@@ -95,9 +97,9 @@ ${philosophy.narrativeArc ? `Narrative arc:\n${philosophy.narrativeArc}` : ''}
 
 Rules for every post you write:
 - No code snippets, no function names, no file paths
-- The story is the why, not the what
+- Detail level: ${detailLevel || 'high-level'} — ${detailLevel === 'technical' ? 'you may reference architecture and design decisions' : detailLevel === 'moderate' ? 'mention what was built but not how' : 'the story is the why, not the what. No implementation details.'}
 - No sensitive information
-- First person singular ("I", never "we") — present tense, confident
+- Voice: ${voice || 'First person singular ("I", never "we"). Present tense. Confident but not arrogant.'}
 - No corporate speak
 - No bullet points in the body
 - Each post should stand alone and advance a distinct narrative beat

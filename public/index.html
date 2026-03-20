@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CAWCAWCAW</title>
+  <link rel="icon" type="image/png" href="/screaming-crow-green-black.png">
   <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
   <style>
     :root {
@@ -24,7 +25,7 @@
 
     /* BACKGROUND CROW */
     .crow-bg { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; pointer-events:none; z-index:0; overflow:hidden; }
-    .crow-bg pre { font-family:'VT323', monospace; font-size:14px; line-height:1.15; color:var(--fg); opacity:.04; white-space:pre; user-select:none; }
+    .crow-bg pre { font-family:'VT323', monospace; font-size:14px; line-height:1.15; color:var(--fg); opacity:.04; white-space:pre; user-select:none; transform:scaleX(-1); }
 
     /* HEADER */
     .header { display:flex; justify-content:space-between; align-items:baseline; border-bottom:1px solid var(--dim); padding-bottom:.3rem; margin-bottom:.6rem; }
@@ -637,6 +638,20 @@ function renderProjects() {
             <span class="farrow" style="padding-top:.2rem">▸</span>
             <textarea class="pe-input" id="ps-philosophy-${name}" rows="4" style="resize:vertical;line-height:1.4;border:1px solid var(--dim);padding:.4rem" placeholder="What drives this project? What story are you telling?">${cfg.philosophy || ''}</textarea>
           </div>
+          <div class="pe-field" style="align-items:flex-start">
+            <span class="pe-label" style="padding-top:.2rem">VOICE</span>
+            <span class="farrow" style="padding-top:.2rem">▸</span>
+            <textarea class="pe-input" id="ps-voice-${name}" rows="2" style="resize:vertical;line-height:1.4;border:1px solid var(--dim);padding:.4rem" placeholder="First person singular, present tense, confident...">${cfg.voice || ''}</textarea>
+          </div>
+          <div class="pe-field">
+            <span class="pe-label">DETAIL LEVEL</span>
+            <span class="farrow">▸</span>
+            <select class="pe-input" id="ps-detaillevel-${name}" style="background:var(--bg);color:var(--fg);border:1px solid var(--dim);padding:.3rem;font-family:inherit;font-size:inherit">
+              <option value="high-level" ${cfg.detailLevel === 'high-level' ? 'selected' : ''}>HIGH-LEVEL — why, not what</option>
+              <option value="moderate" ${cfg.detailLevel === 'moderate' ? 'selected' : ''}>MODERATE — what was built, not how</option>
+              <option value="technical" ${cfg.detailLevel === 'technical' ? 'selected' : ''}>TECHNICAL — architecture and design decisions</option>
+            </select>
+          </div>
           <div class="pe-field">
             <span class="pe-label">TAGLINE</span>
             <span class="farrow">▸</span>
@@ -756,11 +771,13 @@ async function saveProject(name) {
   const platforms = [...platformChecks].map(c => c.value);
   const githubRepo = document.getElementById('ps-githubrepo-' + name).value.trim();
   const philosophy = document.getElementById('ps-philosophy-' + name).value.trim();
+  const voice = document.getElementById('ps-voice-' + name).value.trim();
+  const detailLevel = document.getElementById('ps-detaillevel-' + name).value;
   const tagline = document.getElementById('ps-tagline-' + name).value.trim();
   try {
     const res = await fetch('/api/projects/' + encodeURIComponent(name), {
       method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ schedule, reviewRequired, platforms, githubRepo, philosophy, tagline })
+      body: JSON.stringify({ schedule, reviewRequired, platforms, githubRepo, philosophy, voice, detailLevel, tagline })
     });
     if (!res.ok) throw new Error(await res.text());
     projectSavedState[name] = true;

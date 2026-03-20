@@ -28,7 +28,7 @@ export async function runPipeline(push: GitHubPush): Promise<PipelineResult> {
   const postHistory = getPostHistory(projectName);
   const config = getProjectConfig(projectName);
 
-  const decision = await decide(allCommits, priorNotes, philosophy, projectName, postHistory);
+  const decision = await decide(allCommits, priorNotes, philosophy, projectName, postHistory, config.voice, config.detailLevel);
 
   if (decision.action === 'wait') {
     console.log(`[cawcawcaw] ${projectName}: waiting (${allCommits.length} commits buffered)`);

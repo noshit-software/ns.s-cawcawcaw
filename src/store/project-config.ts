@@ -10,6 +10,8 @@ export interface ProjectConfig {
   githubRepo: string;     // owner/repo — used for catchup via GitHub API
   philosophy: string;     // guiding philosophy for post generation
   tagline: string;        // fixed sign-off appended to every post
+  voice: string;          // writing voice/perspective — injected into system prompt
+  detailLevel: string;    // how technical/deep posts should go
   lastCatchupCommit: string; // SHA of the last commit processed by catchup
 }
 
@@ -20,6 +22,8 @@ export const DEFAULT_CONFIG: ProjectConfig = {
   githubRepo: '',
   philosophy: '',
   tagline: '',
+  voice: 'First person singular ("I", never "we"). Present tense. Confident but not arrogant.',
+  detailLevel: 'high-level',
   lastCatchupCommit: '',
 };
 

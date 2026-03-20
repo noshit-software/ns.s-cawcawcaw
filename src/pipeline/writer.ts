@@ -61,7 +61,9 @@ export async function decide(
   priorNotes: string,
   philosophy: ProjectPhilosophy,
   projectName: string,
-  postHistory: PostRecord[]
+  postHistory: PostRecord[],
+  voice?: string,
+  detailLevel?: string
 ): Promise<WriteDecision> {
   const client = getClient();
 
@@ -96,10 +98,10 @@ Your job is to decide when the story is ready to tell. You see all commits since
 
 When you publish, follow these rules:
 - No code snippets, no function names, no file paths
-- No implementation details — the story is the why, not the what
+- Detail level: ${detailLevel || 'high-level'} — ${detailLevel === 'technical' ? 'you may reference architecture and design decisions' : detailLevel === 'moderate' ? 'mention what was built but not how' : 'the story is the why, not the what. No implementation details.'}
 - No sensitive information: no API keys, internal URLs, team names, credentials
 - Write as if continuing a story, not announcing a release
-- First person singular ("I", never "we") — present tense, confident but not arrogant
+- Voice: ${voice || 'First person singular ("I", never "we"). Present tense. Confident but not arrogant.'}
 - No corporate speak: never say "excited to share", "thrilled to announce", "proud to present"
 - No bullet points in the body
 - End with a forward-looking sentence that sets up the next narrative beat${suppressionNote}
