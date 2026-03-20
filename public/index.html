@@ -591,6 +591,11 @@ function renderProjects() {
             <span class="farrow">▸</span>
             <input class="pe-input" id="ps-repopath-${name}" value="${cfg.repoPath || ''}" placeholder="/path/to/repo" autocomplete="off" spellcheck="false" />
           </div>
+          <div class="pe-field" style="align-items:flex-start">
+            <span class="pe-label" style="padding-top:.2rem">PHILOSOPHY</span>
+            <span class="farrow" style="padding-top:.2rem">▸</span>
+            <textarea class="pe-input" id="ps-philosophy-${name}" rows="4" style="resize:vertical;line-height:1.4;border:1px solid var(--dim);padding:.4rem" placeholder="What drives this project? What story are you telling?">${cfg.philosophy || ''}</textarea>
+          </div>
           <div class="form-actions" style="margin-top:.8rem">
             <button class="btn btn-primary" onclick="saveProject('${name}')">SAVE</button>
             <button class="btn" onclick="runCatchup('${name}')" ${cfg.repoPath ? '' : 'disabled title="Set repo path first"'}>CATCHUP</button>
@@ -637,10 +642,11 @@ async function saveProject(name) {
   const platformChecks = document.querySelectorAll(`#ps-platforms-${name} input[type=checkbox]:checked`);
   const platforms = [...platformChecks].map(c => c.value);
   const repoPath = document.getElementById('ps-repopath-' + name).value.trim();
+  const philosophy = document.getElementById('ps-philosophy-' + name).value.trim();
   try {
     const res = await fetch('/api/projects/' + encodeURIComponent(name), {
       method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ schedule, reviewRequired, platforms, repoPath })
+      body: JSON.stringify({ schedule, reviewRequired, platforms, repoPath, philosophy })
     });
     if (!res.ok) throw new Error(await res.text());
     setMsg('ps-status-' + name, 'SAVED.', 'ok');

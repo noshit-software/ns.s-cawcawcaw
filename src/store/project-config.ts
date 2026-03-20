@@ -8,6 +8,7 @@ export interface ProjectConfig {
   reviewRequired: boolean;
   platforms: string[];    // empty = all configured platforms
   repoPath: string;       // local path to the git repo for catchup
+  philosophy: string;     // guiding philosophy for post generation
 }
 
 export const DEFAULT_CONFIG: ProjectConfig = {
@@ -15,6 +16,7 @@ export const DEFAULT_CONFIG: ProjectConfig = {
   reviewRequired: false,
   platforms: [],
   repoPath: '',
+  philosophy: '',
 };
 
 type Store = Record<string, ProjectConfig>;

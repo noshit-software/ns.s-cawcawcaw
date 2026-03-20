@@ -20,7 +20,8 @@ npm install
 ```
 GITHUB_WEBHOOK_SECRET=     # make something up — you'll paste it into GitHub in step 6
 ANTHROPIC_API_KEY=         # your Anthropic API key
-KNIGHTSROOK_MCP_URL=       # base URL of your Knightsrook MCP server
+LINKEDIN_CLIENT_ID=        # from your LinkedIn developer app
+LINKEDIN_CLIENT_SECRET=    # same place
 ```
 
 ```bash

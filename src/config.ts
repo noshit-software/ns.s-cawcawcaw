@@ -20,7 +20,7 @@ export const config = {
   port: number('PORT', 3000),
   githubWebhookSecret: required('GITHUB_WEBHOOK_SECRET'),
   anthropicApiKey: required('ANTHROPIC_API_KEY'),
-  knightsrookMcpUrl: required('KNIGHTSROOK_MCP_URL'),
+  knightsrookMcpUrl: optional('KNIGHTSROOK_MCP_URL'),
 
   // Platform credentials — adapter is silently skipped if its block is incomplete
   linkedin: {

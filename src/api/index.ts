@@ -131,12 +131,14 @@ router.get('/projects/:name', (req, res) => {
 });
 
 router.post('/projects/:name', (req, res) => {
-  const { schedule, reviewRequired, platforms } = req.body as {
+  const { schedule, reviewRequired, platforms, repoPath, philosophy } = req.body as {
     schedule?: string;
     reviewRequired?: boolean;
     platforms?: string[];
+    repoPath?: string;
+    philosophy?: string;
   };
-  setProjectConfig(req.params.name, { schedule, reviewRequired, platforms });
+  setProjectConfig(req.params.name, { schedule, reviewRequired, platforms, repoPath, philosophy });
   res.json({ ok: true });
 });
 
