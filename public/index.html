@@ -785,8 +785,36 @@ async function saveProject(name) {
   } catch(e) { setMsg('ps-status-' + name, 'ERROR: ' + e.message, 'err'); }
 }
 
+let catchupRunning = null; // project name currently catching up
+
+function setCatchupBusy(name) {
+  catchupRunning = name;
+  // Disable all save and catchup buttons
+  document.querySelectorAll('[id^="ps-save-"]').forEach(b => b.disabled = true);
+  document.querySelectorAll('button[onclick^="runCatchup"]').forEach(b => b.disabled = true);
+  // Show banner
+  let banner = document.getElementById('catchup-banner');
+  if (!banner) {
+    banner = document.createElement('div');
+    banner.id = 'catchup-banner';
+    banner.style.cssText = 'position:fixed;top:0;left:0;right:0;padding:.5rem;background:var(--dim);color:var(--bright);text-align:center;z-index:10000;font-size:1.1em;letter-spacing:.1em;animation:blink 1s step-end infinite';
+    document.body.appendChild(banner);
+  }
+  banner.textContent = `▸ CATCHUP RUNNING: ${name.toUpperCase()} — PLEASE WAIT`;
+  banner.style.display = 'block';
+}
+
+function clearCatchupBusy() {
+  catchupRunning = null;
+  const banner = document.getElementById('catchup-banner');
+  if (banner) banner.style.display = 'none';
+  // Re-enable buttons by reloading projects
+  loadProjects();
+}
+
 async function runCatchup(name) {
   try {
+    setCatchupBusy(name);
     setMsg('ps-status-' + name, 'READING GIT HISTORY... THIS MAY TAKE A MINUTE.', 'ok');
     const res = await fetch('/api/catchup', {
       method: 'POST', headers: {'Content-Type':'application/json'},
@@ -802,13 +830,17 @@ async function runCatchup(name) {
         const current = (await (await fetch('/api/queue?project=' + encodeURIComponent(name))).json()).length;
         if (current > startCount) {
           clearInterval(poll);
+          clearCatchupBusy();
           setMsg('ps-status-' + name, `DONE. ${current - startCount} POST${current - startCount > 1 ? 'S' : ''} QUEUED.`, 'ok');
         }
       } catch {}
     }, 3000);
     // Give up after 5 minutes
-    setTimeout(() => clearInterval(poll), 300_000);
-  } catch(e) { setMsg('ps-status-' + name, 'ERROR: ' + e.message, 'err'); }
+    setTimeout(() => { clearInterval(poll); clearCatchupBusy(); }, 300_000);
+  } catch(e) {
+    clearCatchupBusy();
+    setMsg('ps-status-' + name, 'ERROR: ' + e.message, 'err');
+  }
 }
 
 // ── ACTIVITY ──────────────────────────────────────────────────
