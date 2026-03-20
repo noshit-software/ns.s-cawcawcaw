@@ -7,7 +7,7 @@
     "start": "tsx --env-file=.env src/server.ts",
     "build": "tsc",
     "start:prod": "node --env-file=.env dist/server.js",
-    "test": "node --experimental-test-snapshots --test 'test/**/*.test.ts'",
+    "test": "node --import tsx/esm --experimental-test-snapshots --test test/*.test.ts",
     "linkedin-auth": "tsx --env-file=.env scripts/linkedin-auth.ts"
   },
   "dependencies": {

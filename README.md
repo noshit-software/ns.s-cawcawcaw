@@ -1,210 +1,257 @@
 # cawcawcaw
 
-Commit to Caw. GitHub pushes → Claude reads the accumulating work → when there's a story worth telling, it writes it and posts everywhere the rooster wants to crow.
+You push code. Claude watches. When there's a story worth telling, it writes it and posts it.
+
+No scheduling tools, no "content calendars," no copy-paste into LinkedIn. You commit. It crows.
 
 ---
 
-## Getting started
+## What it does
 
-### 1. Install dependencies
+1. You push to GitHub
+2. Claude reads the accumulating commits — sometimes 2, sometimes 12
+3. When the narrative is ready, it writes a post and queues it
+4. You review (or don't — your call) and it publishes
+
+One post per day, max. Across all projects. The scheduler enforces this globally.
+
+---
+
+## Setup
+
+### 1. Clone and install
 
 ```bash
+git clone https://github.com/noshit-software/ns.s-cawcawcaw.git
 cd ns.s-cawcawcaw
 npm install
 ```
 
----
-
-### 2. Set required env vars
-
-```
-GITHUB_WEBHOOK_SECRET=     # make something up — you'll paste it into GitHub in step 6
-ANTHROPIC_API_KEY=         # your Anthropic API key
-LINKEDIN_CLIENT_ID=        # from your LinkedIn developer app
-LINKEDIN_CLIENT_SECRET=    # same place
-```
+### 2. Configure
 
 ```bash
 cp .env.example .env
-# edit .env
 ```
 
----
+Edit `.env`. Two things are required:
 
-### 3. Start the server
+```
+GITHUB_WEBHOOK_SECRET=     # make something up
+ANTHROPIC_API_KEY=         # https://console.anthropic.com
+```
+
+Everything else is optional or configured through the UI.
+
+### 3. Run
 
 ```bash
-npm start
+npm start          # dev (tsx, hot reload)
+npm run build      # compile
+npm run start:prod # production (node, needs build first)
 ```
 
-You should see:
 ```
 [cawcawcaw] Listening on port 3000
 [cawcawcaw] UI: http://localhost:3000
 [scheduler] Started
 ```
 
-Runtime data is stored in `~/.cawcawcaw/`. It's created automatically on first run. Project configs are stored in `~/.cawcawcaw/projects.json` — all fields merge with defaults on read and write, so new config fields are always safe to add.
+Runtime data lives in `~/.cawcawcaw/`. Created automatically on first run.
 
 ---
 
-### 4. Configure your first platform
+## Connecting LinkedIn (the model)
 
-Open `http://localhost:3000` and press `1` for Platforms.
+LinkedIn is the fully wired platform. Here's the exact flow:
 
-Click **LinkedIn** → paste your credentials → **SAVE**.
+### 1. Create a LinkedIn app
 
-You need two things:
+Go to [developer.linkedin.com](https://developer.linkedin.com) → Create App.
 
-- **LinkedIn Client ID + Secret** — from your LinkedIn developer app (Auth tab). The UI handles the OAuth flow — just click CONNECT.
-- **Author URN** — your LinkedIn member ID in URN form. Get it by calling:
+You need:
+- A LinkedIn Company Page (create one if you don't have one — it can be bare)
+- App name, logo, whatever
 
-```bash
-curl -H "Authorization: Bearer <your_token>" https://api.linkedin.com/v2/userinfo
-```
+### 2. Get your credentials
 
-The `sub` field is your ID. Your URN is `urn:li:person:<sub>`.
+In your app's **Auth** tab:
+- Copy **Client ID** and **Client Secret** into `.env`
+- Add `http://localhost:3000/auth/linkedin/callback` to **Authorized redirect URLs**
 
----
+### 3. Request the right products
 
-### 5. Add a philosophy entry for each repo
+In the **Products** tab, request:
+- **Share on LinkedIn** — this is what lets you post
+- **Sign In with LinkedIn using OpenID Connect** — this gets your member ID
 
-In the Knightsrook MCP, create a topic at key `project:<repo-name>:philosophy`.
+Both need approval. Share on LinkedIn can take a few hours. OpenID Connect is usually instant.
 
-The `<repo-name>` must match the GitHub repository name exactly (e.g. `ns.s-m2t`, not `ns.s/ns.s-m2t`).
+**Gotcha:** Without "Share on LinkedIn" approved, the OAuth flow works but posting returns a 403. You'll see `CONNECT` succeed and then `Published → failed` in the queue. This is LinkedIn being LinkedIn.
 
-No philosophy entry = no post. The pipeline will throw and stop.
+### 4. Connect in the UI
 
-If you want a fallback for repos that don't have their own entry, create one at `project:default:philosophy`.
+Open `http://localhost:3000` → `[1] PLATFORMS` → click **LINKEDIN** → **CONNECT**.
 
----
+The OAuth flow handles everything — access token, refresh token, author URN. All stored in `~/.cawcawcaw/credentials.json`.
 
-### 6. Configure the project in the UI
-
-Press `3` for Projects → **+ ADD** your repo name → expand it and set:
-
-- **Schedule** — when the publish window opens: `05:00` (default), `09:00 weekdays`, `09:00 weekends`. One post per day total across all projects — oldest first. Rate limit persists across server restarts.
-- **Review required** — ON by default for new projects. Posts sit at `pending_review` until you approve them in the Queue tab. When OFF, posts are auto-approved and the scheduler will publish them at the next window
-- **Platforms** — which platforms to post to (empty = all configured platforms)
-- **GitHub repo** — `owner/repo` format (e.g. `noshit-software/ns.s-cawcawcaw`) — used for catchup via GitHub API. Hit **TEST** to verify the connection.
-- **Philosophy** — tells Claude the project's guiding philosophy and narrative arc
-- **Voice** — writing voice/perspective per project (default: first person singular, present tense, confident). Override per project for different tones
-- **Detail level** — how deep posts should go: `high-level` (why, not what), `moderate` (what was built, not how), or `technical` (architecture and design decisions)
-- **Tagline** — appended to every post at publish time (e.g. `CAW.`)
-
-Hit **SAVE**. Projects can also be renamed or deleted from within their expanded view.
+**Gotcha:** LinkedIn access tokens expire in 60 days. Refresh tokens last a year. The app doesn't auto-refresh yet — if posts start failing after two months, click RECONNECT.
 
 ---
 
-### 7. Expose the webhook endpoint
+## Adding a project
 
-GitHub needs to reach `/webhook/github` over the internet. If you're running locally, use ngrok:
+`[3] PROJECTS` → type a name → **+ ADD** → expand it.
 
-```bash
-ngrok http 3000
-```
+| Field | What it does |
+|-------|-------------|
+| **Schedule** | When the publish window opens. `05:00` (default), `09:00 weekdays`, `09:00 weekends`, or `immediate`. |
+| **Review required** | ON by default. Posts sit at `pending_review` until you approve them. Turn OFF and posts auto-approve — the scheduler publishes at the next window. |
+| **Platforms** | Which platforms to post to. Empty = all configured platforms. |
+| **GitHub repo** | `owner/repo` format. Used for catchup via GitHub API. Hit **TEST** to verify. |
+| **Philosophy** | The project's guiding philosophy. Tells Claude what story you're telling and why. |
+| **Voice** | Writing perspective per project. Default: first person singular, present tense, confident. Override for different tones. |
+| **Detail level** | How deep posts go. `high-level` = why, not what. `moderate` = what was built, not how. `technical` = architecture and design decisions. |
+| **Tagline** | Appended to every post at publish time. |
 
-Copy the `https://` URL.
-
----
-
-### 8. Wire up GitHub
-
-For each repo you want cawcawcaw to watch:
-
-**GitHub repo → Settings → Webhooks → Add webhook**
-
-| Field | Value |
-|-------|-------|
-| Payload URL | `https://<your-ngrok-or-server-url>/webhook/github` |
-| Content type | `application/json` |
-| Secret | your `GITHUB_WEBHOOK_SECRET` |
-| Events | Just the push event |
+Hit **SAVE**. Projects can be renamed or deleted from the expanded view.
 
 ---
 
-### 9. Test it
+## Catchup
 
-Push something to the default branch. Watch the server logs. Then press `4` (Activity) in the UI — you'll see whether Claude decided to post or wait, and what notes it left itself.
+For repos with existing history — run catchup to generate a backlog of drafts from past commits.
 
-If it waited, that's normal on the first push. It's building toward something. Push a few more commits and it'll CAW when the story is ready.
-
----
-
-## Catchup (for repos with existing history)
-
-If a repo has been active for a while, run catchup to get Claude up to speed and generate a backlog of drafts.
-
-1. Make sure the repo's **GitHub repo** is set in the Projects tab (e.g. `owner/repo`)
+1. Set the **GitHub repo** field on the project
 2. Click **CATCHUP**
-3. Server reads the full git history directly, Claude finds the narrative arcs, drafts get queued
-4. Go to `[2] QUEUE` to review and approve
+3. Claude reads the full commit history, finds narrative arcs, queues drafts
+4. Review in `[2] QUEUE`
+
+**Gotcha:** First catchup on an active repo can generate a lot of posts. Review required is ON by default, so nothing goes out without you. But if you turned it OFF — fix that first.
+
+**Gotcha:** Catchup uses the GitHub API, not webhooks. It needs a `GITHUB_TOKEN` in `.env` for private repos. Public repos work without one but will hit rate limits faster.
 
 ---
 
-## Queue
+## The queue
 
-All posts — live and catchup — go through the queue.
+All posts go through the queue. Nothing publishes without passing through here.
 
 | Status | Meaning |
 |--------|---------|
-| `pending_review` | Waiting for your approval |
-| `approved` | Ready — scheduler will release it at the next time window |
-| `published` | Done — logged in Activity tab |
-| `rejected` | Killed |
+| `pending_review` | Waiting for you |
+| `approved` | Scheduler will publish at the next window |
+| `published` | Done |
+| `rejected` | Killed — can be re-queued |
 
-In the Queue tab, click any post to expand it and read the full draft. Click **EDIT** to modify the headline, body, or tags before approving. **APPROVE** marks the copy as ready. **PUBLISH NOW** sends it out — nothing goes live until you explicitly publish.
+Click a post to expand it. **EDIT** to rewrite before approving. **APPROVE** to mark ready. **RESCIND** to pull back an approved post. **PUBLISH NOW** bypasses the scheduler and rate limit — use deliberately.
+
+**Gotcha:** DELETE removes the post permanently. RESCIND just moves it to rejected. RE-QUEUE puts rejected posts back to pending.
 
 ---
 
 ## How the narrative engine works
 
-Claude doesn't post on every push. It accumulates commits across pushes — sometimes 2, sometimes 12 — and decides when there's enough of a story to say something. When it waits, it leaves itself notes about what thread it's tracking and what it's looking for next. When it publishes, it carries forward notes about other threads still forming.
+Claude doesn't post on every push. It accumulates commits and decides when there's a story. When it waits, it leaves itself notes about the thread it's tracking. When it publishes, it carries forward notes about other threads still forming.
 
-It also tracks what it's already published so it doesn't rehash the same ground.
+It tracks what it's already published so it doesn't repeat itself. Philosophy, voice, and detail level shape every draft per project.
 
----
-
-## Adding a platform
-
-1. `cp -r src/publishers/_template src/publishers/<platform>`
-2. Implement `isConfigured()`, `publish()`, and `constraints`
-3. Add optional credential block to `src/config.ts`
-4. Import + register in `src/publishers/registry.ts`
-5. Update this README
-
-Zero changes to `pipeline/`, `webhook/`, or `philosophy/`.
+The rate limit is global — one post per day across all projects, oldest approved first. It persists to disk and survives restarts.
 
 ---
 
-## Platforms
+## Other platforms
 
-| Platform | Status | Platform | Status |
-|----------|--------|----------|--------|
-| Bluesky | stub | LinkedIn | ready |
-| Dev.to | ready | Mastodon | stub |
-| Discord | stub | Medium | ready |
-| Facebook | ready | Reddit | stub |
-| Hacker News | stub | Threads | ready |
-| Hashnode | ready | TikTok | stub |
-| Instagram | stub | X/Twitter | stub |
-| YouTube Community | stub | | |
+LinkedIn is fully implemented with OAuth. Other platforms are at various stages:
+
+| Platform | Status | Notes |
+|----------|--------|-------|
+| LinkedIn | **ready** | OAuth flow, full API posting |
+| Dev.to | ready | API key auth |
+| Facebook | ready | Page token auth |
+| Hashnode | ready | API key auth |
+| Medium | ready | Integration token |
+| Threads | ready | Meta OAuth |
+| Bluesky | stub | Needs handle + app password |
+| Discord | stub | Webhook URL |
+| Hacker News | stub | |
+| Instagram | stub | |
+| Mastodon | stub | Instance URL + token |
+| Reddit | stub | |
+| TikTok | stub | |
+| X/Twitter | stub | |
+| YouTube | stub | Community posts |
+
+"Ready" means the adapter exists and works. "Stub" means the file is there but `publish()` isn't implemented yet.
+
+### Adding a new platform
+
+```
+cp -r src/publishers/_template src/publishers/<platform>
+```
+
+Implement `isConfigured()`, `publish()`, and `constraints`. Register in `src/publishers/registry.ts`. Zero changes to the pipeline, webhook handler, or philosophy system.
+
+---
+
+## Philosophy
+
+Each project needs a philosophy entry in the Knightsrook MCP at key `project:<repo-name>:philosophy`. The repo name must match exactly.
+
+No philosophy = no post. The pipeline stops.
+
+Fallback: create `project:default:philosophy` for repos without their own entry.
+
+**Gotcha:** Philosophy is fetched from an external MCP server. If the server is down, the pipeline fails silently and nothing queues. Check `[4] ACTIVITY` if posts stop appearing.
+
+---
+
+## Deploying
+
+```bash
+npm run build
+npm run start:prod
+```
+
+Use pm2 or systemd to keep it alive:
+
+```bash
+pm2 start dist/server.js --name cawcawcaw
+pm2 save && pm2 startup
+```
+
+Put nginx or caddy in front for HTTPS if the UI needs to be reachable externally. **Keep the UI behind auth** — it exposes credential management.
+
+Runtime data in `~/.cawcawcaw/` — back it up. Specifically:
+- `credentials.json` — OAuth tokens
+- `projects.json` — project configs
+- `history.json` — published post log (prevents duplicate stories)
+- `last-publish.txt` — daily rate limit state
 
 ---
 
 ## UI
 
-`http://localhost:3000` — Apple IIe phosphor green terminal UI with a dimmed ASCII crow watermark in the background.
+`http://localhost:3000` — green phosphor terminal. Keyboard nav:
 
 | Key | Tab |
 |-----|-----|
-| `1` | Platforms — credential management |
-| `2` | Queue — review and approve drafts |
-| `3` | Projects — per-project config + catchup |
-| `4` | Activity — pipeline run log |
-| `5` | System — server status |
-| `Esc` | Close open form |
+| `1` | Platforms |
+| `2` | Queue |
+| `3` | Projects |
+| `4` | Activity |
+| `5` | System |
+| `Esc` | Close form |
 
-The header shows a pending review count and queued post count. Catchup buttons show new commit counts and disable when caught up.
+---
 
-**Keep this URL private.** It exposes credential management. Do not expose it to the public internet without auth in front.
+## Tests
+
+```bash
+npm test
+```
+
+Uses Node's built-in test runner with `tsx` for TypeScript support. Regression tests cover:
+
+- **project-config** — `DEFAULT_CONFIG` has `reviewRequired: true` (sev 1 fix), `setProjectConfig` filters undefined values, `getAllProjectConfigs` merges defaults into stored configs, `getProjectConfig` returns defaults for unknown projects
+- **queue** — `enqueue` handles missing/null tags (defaults to empty array), missing draft fields default to empty strings, `reviewRequired` flag correctly sets `pending_review` vs `approved` status
+- **scheduler** — `parseSchedule` correctly parses `immediate`, `HH:MM`, and `HH:MM weekdays/weekends` formats; `shouldPublishNow` always returns true for immediate schedules
