@@ -203,4 +203,6 @@ Zero changes to `pipeline/`, `webhook/`, or `philosophy/`.
 | `5` | System — server status |
 | `Esc` | Close open form |
 
+The header shows a pending review count and queued post count. Catchup buttons show new commit counts and disable when caught up.
+
 **Keep this URL private.** It exposes credential management. Do not expose it to the public internet without auth in front.

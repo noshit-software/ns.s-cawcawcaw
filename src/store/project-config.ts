@@ -10,6 +10,7 @@ export interface ProjectConfig {
   repoPath: string;       // local path to the git repo for catchup
   philosophy: string;     // guiding philosophy for post generation
   tagline: string;        // fixed sign-off appended to every post
+  lastCatchupCommit: string; // SHA of the last commit processed by catchup
 }
 
 export const DEFAULT_CONFIG: ProjectConfig = {
@@ -19,6 +20,7 @@ export const DEFAULT_CONFIG: ProjectConfig = {
   repoPath: '',
   philosophy: '',
   tagline: '',
+  lastCatchupCommit: '',
 };
 
 type Store = Record<string, ProjectConfig>;

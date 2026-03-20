@@ -146,6 +146,20 @@ Quality over quantity. If the history only has one real story, queue one post. I
 }
 
 // Read git history directly from a local repo path
+export function getLatestCommitSha(repoPath: string): string {
+  return execFileSync('git', ['rev-parse', 'HEAD'], { cwd: repoPath, encoding: 'utf-8' }).trim();
+}
+
+export function getCommitCount(repoPath: string, sinceSha?: string): number {
+  if (!sinceSha) return 0;
+  try {
+    const output = execFileSync('git', ['rev-list', '--count', sinceSha + '..HEAD'], { cwd: repoPath, encoding: 'utf-8' });
+    return parseInt(output.trim(), 10) || 0;
+  } catch {
+    return 0;
+  }
+}
+
 export function readGitLog(repoPath: string): CatchupCommit[] {
   const output = execFileSync(
     'git',

@@ -188,6 +188,7 @@
 
   <div class="header">
     <span class="logo">]CAWCAWCAW<span class="cursor"></span></span>
+    <span id="pending-badge" style="color:var(--amber);font-size:.85em;letter-spacing:.08em"></span>
     <span class="brand">NOSHIT SOFTWARE</span>
   </div>
 
@@ -639,7 +640,7 @@ function renderProjects() {
           </div>
           <div class="form-actions" style="margin-top:.8rem">
             <button class="btn btn-primary" id="ps-save-${name}" onclick="saveProject('${name}')" ${projectSavedState[name] === false ? '' : 'disabled'}>SAVE</button>
-            <button class="btn" onclick="runCatchup('${name}')" ${cfg.repoPath ? '' : 'disabled title="Set repo path first"'}>CATCHUP</button>
+            <button class="btn" onclick="runCatchup('${name}')" ${!cfg.repoPath ? 'disabled title="Set repo path first"' : cfg.newCommits === 0 && cfg.lastCatchupCommit ? 'disabled' : ''}>${cfg.newCommits > 0 ? 'CATCHUP (' + cfg.newCommits + ' NEW)' : 'CATCHUP'}</button>
             ${projectSavedState[name] === true ? '<span class="status-msg ok" style="margin-left:.5rem">SAVED</span>' : ''}
           </div>
           <div class="status-msg" id="ps-status-${name}"></div>
@@ -794,9 +795,24 @@ function setMsg(id, msg, type) {
 }
 function clearMsg(id) { setMsg(id, '', ''); }
 
+// ── PENDING BADGE ─────────────────────────────────────────────
+async function updatePendingBadge() {
+  try {
+    const posts = await (await fetch('/api/queue')).json();
+    const pending = posts.filter(p => p.status === 'pending_review').length;
+    const approved = posts.filter(p => p.status === 'approved').length;
+    const parts = [];
+    if (pending) parts.push(`${pending} TO REVIEW`);
+    if (approved) parts.push(`${approved} QUEUED`);
+    document.getElementById('pending-badge').textContent = parts.length ? parts.join('  ·  ') : '';
+  } catch {}
+}
+setInterval(updatePendingBadge, 30000);
+
 // ── INIT ──────────────────────────────────────────────────────
 loadPlatforms();
 switchTab(currentTab);
+updatePendingBadge();
 </script>
 </body>
 </html>

@@ -7,7 +7,7 @@ import { getQueue, updateStatus, updateDraft, removeFromQueue } from '../store/q
 import { getProjectConfig, setProjectConfig, getAllProjectConfigs } from '../store/project-config.js';
 import { fetchPhilosophy } from '../philosophy/client.js';
 import { getPostHistory } from '../store/post-history.js';
-import { runCatchup, readGitLog } from '../pipeline/catchup.js';
+import { runCatchup, readGitLog, getLatestCommitSha, getCommitCount } from '../pipeline/catchup.js';
 import { enqueue } from '../store/queue.js';
 import { updateNotes } from '../store/commit-buffer.js';
 import { publishNow } from '../pipeline/scheduler.js';
@@ -133,7 +133,16 @@ router.delete('/queue/:id', (req, res) => {
 
 router.get('/projects', (_req, res) => {
   const configs = getAllProjectConfigs();
-  res.json(configs);
+  // Enrich with new commit counts
+  const enriched: Record<string, unknown> = {};
+  for (const [name, cfg] of Object.entries(configs)) {
+    let newCommits = 0;
+    if (cfg.repoPath && cfg.lastCatchupCommit) {
+      try { newCommits = getCommitCount(cfg.repoPath, cfg.lastCatchupCommit); } catch {}
+    }
+    enriched[name] = { ...cfg, newCommits };
+  }
+  res.json(enriched);
 });
 
 router.get('/projects/:name', (req, res) => {
@@ -191,6 +200,12 @@ router.post('/catchup', async (req, res) => {
         enqueue(project, draft, 'catchup', config.platforms, config.reviewRequired);
       }
       if (notes) updateNotes(project, notes);
+
+      // Save latest commit SHA so we know catchup is current
+      try {
+        const sha = getLatestCommitSha(config.repoPath);
+        setProjectConfig(project, { lastCatchupCommit: sha });
+      } catch {}
 
       console.log(`[catchup] ${project}: queued ${drafts.length} posts from ${commits.length} commits`);
     } catch (err) {
