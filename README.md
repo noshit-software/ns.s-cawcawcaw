@@ -160,14 +160,6 @@ It also tracks what it's already published so it doesn't rehash the same ground.
 
 ---
 
-## Multiple accounts
-
-Each platform supports multiple named accounts. For example, you can have `LinkedIn / Personal` and `LinkedIn / Business` — each with its own credentials, each targetable independently from the Projects tab.
-
-In the Platforms tab, click any platform → **+ ADD** an account with a label → then CONNECT or configure credentials for that account.
-
----
-
 ## Adding a platform
 
 1. `cp -r src/publishers/_template src/publishers/<platform>`

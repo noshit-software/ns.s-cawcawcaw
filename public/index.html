@@ -324,31 +324,13 @@ function selectPlatform(name, accountId) {
     : p.label.toUpperCase();
   document.getElementById('config-title').textContent = 'CONFIGURE: ' + title;
 
-  // Build accounts list
-  const accountsHtml = `
-    <div style="margin-bottom:.8rem">
-      <div style="color:var(--dim);font-size:.85em;letter-spacing:.08em;margin-bottom:.3rem">ACCOUNTS</div>
-      ${p.accounts.length ? p.accounts.map(a => `
-        <div style="display:flex;align-items:center;gap:.6rem;padding:.2rem 0;border-bottom:1px solid rgba(51,255,51,.07)">
-          <span style="color:${a.configured ? 'var(--bright)' : 'var(--dim)'}">${a.configured ? '●' : '○'}</span>
-          <span style="color:var(--fg);cursor:pointer;flex:1" onclick="event.stopPropagation();selectPlatform('${name}','${a.id}')">${a.label.toUpperCase()}</span>
-          <button class="btn btn-danger" style="font-size:.8em;padding:0 .5rem" onclick="event.stopPropagation();removeAccountUI('${a.id}')">✕</button>
-        </div>`).join('') : ''}
-      <div style="display:flex;gap:.6rem;margin-top:.4rem" onclick="event.stopPropagation()">
-        <input class="finput" id="new-account-label" style="flex:1" placeholder="e.g. Personal, Business" autocomplete="off" spellcheck="false"/>
-        <button class="btn" style="font-size:.85em" onclick="addAccountUI('${name}')">+ ADD</button>
-      </div>
-    </div>
-    <hr/>
-  `;
-
   const configTarget = selectedAccount || name;
   const isConfigured = selectedAccount
     ? p.accounts.find(a => a.id === selectedAccount)?.configured
     : p.fields.every(f => f.configured);
 
   if (p.oauth) {
-    document.getElementById('config-fields').innerHTML = accountsHtml + (isConfigured
+    document.getElementById('config-fields').innerHTML = (isConfigured
       ? `<div style="margin:.6rem 0;color:var(--bright)">● CONNECTED</div>
          <div style="color:var(--dim);font-size:.9em;margin-bottom:.6rem">Click RECONNECT to refresh credentials.</div>`
       : `<div style="margin:.6rem 0;color:var(--dim)">Click CONNECT to authorize with ${p.label}.</div>`);
@@ -358,7 +340,7 @@ function selectPlatform(name, accountId) {
       <button class="btn" onclick="closeConfig()">CANCEL</button>
     `;
   } else {
-    document.getElementById('config-fields').innerHTML = accountsHtml + p.fields.map(f => `
+    document.getElementById('config-fields').innerHTML = p.fields.map(f => `
       <div class="field-row">
         <span class="flabel">${f.label}</span><span class="farrow">▸</span>
         <input class="finput" type="${f.secret ? 'password' : 'text'}" id="field-${f.key}"
