@@ -219,7 +219,7 @@ pm2 start dist/server.js --name cawcawcaw
 pm2 save && pm2 startup
 ```
 
-Put nginx or caddy in front for HTTPS if the UI needs to be reachable externally. **Keep the UI behind auth** — it exposes credential management.
+Put nginx or caddy in front for HTTPS if the UI needs to be reachable externally. The app sets `trust proxy` so it correctly reads `X-Forwarded-Proto` for OAuth redirect URIs behind reverse proxies (Cloudflare, nginx, etc.). **Keep the UI behind auth** — it exposes credential management.
 
 Runtime data in `~/.cawcawcaw/` — back it up. Specifically:
 - `credentials.json` — OAuth tokens

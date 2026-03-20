@@ -10,6 +10,7 @@ import { startScheduler } from './pipeline/scheduler.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
+app.set('trust proxy', true);
 app.use(cookieParser());
 
 // GitHub webhook — raw body required for HMAC verification
