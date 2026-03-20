@@ -271,8 +271,26 @@ let editingQueue = new Set();
 let expandedProjects = new Set();
 let projects = {};
 
+// ── STATE PERSISTENCE ─────────────────────────────────────────
+function saveState() {
+  const state = { tab: currentTab, expandedQueue: [...expandedQueue], expandedProjects: [...expandedProjects] };
+  try { localStorage.setItem('caw-ui', JSON.stringify(state)); } catch {}
+}
+function loadState() {
+  try {
+    const s = JSON.parse(localStorage.getItem('caw-ui') || '{}');
+    if (s.tab) currentTab = s.tab;
+    if (s.expandedQueue) expandedQueue = new Set(s.expandedQueue);
+    if (s.expandedProjects) expandedProjects = new Set(s.expandedProjects);
+  } catch {}
+}
+let currentTab = 'platforms';
+loadState();
+
 // ── TABS ──────────────────────────────────────────────────────
 function switchTab(tab) {
+  currentTab = tab;
+  saveState();
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
   document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + tab));
   if (tab === 'queue') loadQueue();
@@ -506,6 +524,7 @@ PHILOSOPHY: ${esc(post.draft.philosophyPoint)}
 function toggleQueue(id) {
   if (expandedQueue.has(id)) { expandedQueue.delete(id); editingQueue.delete(id); }
   else expandedQueue.add(id);
+  saveState();
   loadQueue();
 }
 
@@ -619,30 +638,52 @@ function renderProjects() {
             <input class="pe-input" id="ps-tagline-${name}" value="${cfg.tagline || ''}" placeholder="Appended to every post" autocomplete="off" spellcheck="false" />
           </div>
           <div class="form-actions" style="margin-top:.8rem">
-            <button class="btn btn-primary" onclick="saveProject('${name}')">SAVE</button>
+            <button class="btn btn-primary" id="ps-save-${name}" onclick="saveProject('${name}')" ${projectSavedState[name] === false ? '' : 'disabled'}>SAVE</button>
             <button class="btn" onclick="runCatchup('${name}')" ${cfg.repoPath ? '' : 'disabled title="Set repo path first"'}>CATCHUP</button>
+            ${projectSavedState[name] === true ? '<span class="status-msg ok" style="margin-left:.5rem">SAVED</span>' : ''}
           </div>
           <div class="status-msg" id="ps-status-${name}"></div>
         </div>
       </div>`;
   }).join('');
 
-  // Wire up review checkboxes
+  // Wire up change detection
   names.forEach(name => {
     const cb = document.getElementById('ps-review-' + name);
     if (cb) cb.addEventListener('change', () => {
       document.getElementById('ps-review-label-' + name).textContent = cb.checked ? 'ON' : 'OFF';
+      markProjectDirty(name);
     });
+    // Listen on all inputs/textareas in this project
+    const entry = document.getElementById('pe-' + name);
+    if (entry) {
+      entry.querySelectorAll('input, textarea').forEach(el => {
+        el.addEventListener('input', () => markProjectDirty(name));
+        el.addEventListener('change', () => markProjectDirty(name));
+      });
+    }
   });
+}
+
+const projectSavedState = {};  // name → true if just saved and not dirty
+
+function markProjectDirty(name) {
+  projectSavedState[name] = false;
+  const btn = document.getElementById('ps-save-' + name);
+  const saved = document.getElementById('ps-saved-' + name);
+  if (btn) btn.disabled = false;
+  if (saved) saved.style.display = 'none';
 }
 
 function updatePlatformLabel(checkbox, name) {
   checkbox.closest('.platform-check').classList.toggle('checked', checkbox.checked);
+  markProjectDirty(name);
 }
 
 function toggleProject(name) {
   if (expandedProjects.has(name)) expandedProjects.delete(name);
   else expandedProjects.add(name);
+  saveState();
   renderProjects();
 }
 
@@ -672,7 +713,7 @@ async function saveProject(name) {
       body: JSON.stringify({ schedule, reviewRequired, platforms, repoPath, philosophy, tagline })
     });
     if (!res.ok) throw new Error(await res.text());
-    setMsg('ps-status-' + name, 'SAVED.', 'ok');
+    projectSavedState[name] = true;
     await loadProjects();
   } catch(e) { setMsg('ps-status-' + name, 'ERROR: ' + e.message, 'err'); }
 }
@@ -686,7 +727,20 @@ async function runCatchup(name) {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error);
-    setMsg('ps-status-' + name, `RUNNING. ${data.commitsParsed} COMMITS. CHECK [2] QUEUE.`, 'ok');
+    setMsg('ps-status-' + name, `RUNNING. ${data.commitsParsed} COMMITS. CLAUDE IS WRITING...`, 'ok');
+    // Poll queue until new posts appear
+    const startCount = (await (await fetch('/api/queue?project=' + encodeURIComponent(name))).json()).length;
+    const poll = setInterval(async () => {
+      try {
+        const current = (await (await fetch('/api/queue?project=' + encodeURIComponent(name))).json()).length;
+        if (current > startCount) {
+          clearInterval(poll);
+          setMsg('ps-status-' + name, `DONE. ${current - startCount} POST${current - startCount > 1 ? 'S' : ''} QUEUED.`, 'ok');
+        }
+      } catch {}
+    }, 3000);
+    // Give up after 5 minutes
+    setTimeout(() => clearInterval(poll), 300_000);
   } catch(e) { setMsg('ps-status-' + name, 'ERROR: ' + e.message, 'err'); }
 }
 
@@ -742,6 +796,7 @@ function clearMsg(id) { setMsg(id, '', ''); }
 
 // ── INIT ──────────────────────────────────────────────────────
 loadPlatforms();
+switchTab(currentTab);
 </script>
 </body>
 </html>
