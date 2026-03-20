@@ -48,6 +48,20 @@ export function setProjectConfig(project: string, config: Partial<ProjectConfig>
   save(store);
 }
 
+export function deleteProject(project: string): void {
+  const store = load();
+  delete store[project];
+  save(store);
+}
+
+export function renameProject(oldName: string, newName: string): void {
+  const store = load();
+  if (!store[oldName]) return;
+  store[newName] = store[oldName];
+  delete store[oldName];
+  save(store);
+}
+
 export function getAllProjectConfigs(): Record<string, ProjectConfig> {
   return load();
 }

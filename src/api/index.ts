@@ -4,7 +4,7 @@ import { getCredential, setCredentials, clearCredentials } from '../store/creden
 import { getActivity } from '../activity/log.js';
 import { getAllAccounts, addAccount, removeAccount, getAccountsByType } from '../store/accounts.js';
 import { getQueue, updateStatus, updateDraft, removeFromQueue } from '../store/queue.js';
-import { getProjectConfig, setProjectConfig, getAllProjectConfigs } from '../store/project-config.js';
+import { getProjectConfig, setProjectConfig, getAllProjectConfigs, deleteProject, renameProject } from '../store/project-config.js';
 import { fetchPhilosophy } from '../philosophy/client.js';
 import { getPostHistory } from '../store/post-history.js';
 import { runCatchup, fetchGitHubCommits, getNewCommitCount } from '../pipeline/catchup.js';
@@ -166,16 +166,28 @@ router.post('/projects/:name', (req, res) => {
   res.json({ ok: true });
 });
 
+router.delete('/projects/:name', (req, res) => {
+  deleteProject(req.params.name);
+  res.json({ ok: true });
+});
+
+router.post('/projects/:name/rename', (req, res) => {
+  const { newName } = req.body as { newName: string };
+  if (!newName?.trim()) { res.status(400).json({ error: 'newName required' }); return; }
+  renameProject(req.params.name, newName.trim());
+  res.json({ ok: true });
+});
+
 // ── CATCHUP ──────────────────────────────────────────────────
 
-router.get('/projects/:name/test-repo', async (req, res) => {
-  const config = getProjectConfig(req.params.name);
-  if (!config.githubRepo) { res.status(400).json({ error: 'No GitHub repo set' }); return; }
+router.get('/test-repo', async (req, res) => {
+  const repo = req.query.repo as string;
+  if (!repo) { res.status(400).json({ error: 'No repo specified' }); return; }
   try {
     const headers: Record<string, string> = { Accept: 'application/vnd.github+json' };
     const ghToken = process.env.GITHUB_TOKEN;
     if (ghToken) headers.Authorization = `Bearer ${ghToken}`;
-    const r = await fetch(`https://api.github.com/repos/${config.githubRepo}`, { headers });
+    const r = await fetch(`https://api.github.com/repos/${repo}`, { headers });
     if (!r.ok) throw new Error(`${r.status} — ${r.statusText}`);
     const data = await r.json() as { full_name: string; private: boolean; default_branch: string; pushed_at: string };
     res.json({ ok: true, repo: data.full_name, private: data.private, branch: data.default_branch, lastPush: data.pushed_at });

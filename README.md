@@ -90,7 +90,7 @@ Press `3` for Projects → **+ ADD** your repo name → expand it and set:
 - **Philosophy** — tells Claude what voice and tone to use when writing posts
 - **Tagline** — appended to every post at publish time (e.g. `CAW.`)
 
-Hit **SAVE**.
+Hit **SAVE**. Projects can also be renamed or deleted from within their expanded view.
 
 ---
 

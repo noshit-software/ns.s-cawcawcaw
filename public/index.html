@@ -647,6 +647,12 @@ function renderProjects() {
             ${projectSavedState[name] === true ? '<span class="status-msg ok" style="margin-left:.5rem">SAVED</span>' : ''}
           </div>
           <div class="status-msg" id="ps-status-${name}"></div>
+          <hr/>
+          <div style="display:flex;gap:.6rem;align-items:center">
+            <input class="pe-input" id="ps-rename-${name}" value="${name}" style="flex:1" autocomplete="off" spellcheck="false"/>
+            <button class="btn" onclick="renameProjectUI('${name}')">RENAME</button>
+            <button class="btn btn-danger" onclick="deleteProjectUI('${name}')">DELETE</button>
+          </div>
         </div>
       </div>`;
   }).join('');
@@ -679,11 +685,37 @@ function markProjectDirty(name) {
   if (saved) saved.style.display = 'none';
 }
 
+async function renameProjectUI(name) {
+  const newName = document.getElementById('ps-rename-' + name)?.value?.trim();
+  if (!newName || newName === name) return;
+  try {
+    const res = await fetch('/api/projects/' + encodeURIComponent(name) + '/rename', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ newName })
+    });
+    if (!res.ok) throw new Error((await res.json()).error);
+    expandedProjects.delete(name);
+    expandedProjects.add(newName);
+    await loadProjects();
+  } catch(e) { setMsg('ps-status-' + name, 'ERROR: ' + e.message, 'err'); }
+}
+
+async function deleteProjectUI(name) {
+  if (!confirm('Delete project "' + name + '"? Queue entries will remain.')) return;
+  try {
+    await fetch('/api/projects/' + encodeURIComponent(name), { method: 'DELETE' });
+    expandedProjects.delete(name);
+    await loadProjects();
+  } catch(e) { console.error(e); }
+}
+
 async function testRepo(name) {
   const el = document.getElementById('ps-repo-status-' + name);
+  const repo = document.getElementById('ps-githubrepo-' + name)?.value?.trim();
+  if (!repo) { if (el) { el.textContent = '✗ Enter a repo first'; el.style.color = 'var(--red)'; } return; }
   if (el) { el.textContent = 'TESTING...'; el.style.color = 'var(--dim)'; }
   try {
-    const res = await fetch('/api/projects/' + encodeURIComponent(name) + '/test-repo');
+    const res = await fetch('/api/test-repo?repo=' + encodeURIComponent(repo));
     const data = await res.json();
     if (!res.ok) throw new Error(data.error);
     if (el) { el.textContent = '● ' + data.repo + (data.private ? ' (PRIVATE)' : '') + ' — ' + data.branch; el.style.color = 'var(--bright)'; }
