@@ -257,3 +257,5 @@ Uses Node's built-in test runner with `tsx` for TypeScript support. Regression t
 - **scheduler** — `parseSchedule` correctly parses `immediate`, `HH:MM`, and `HH:MM weekdays/weekends` formats; `shouldPublishNow` always returns true for immediate schedules
 
 Build is strict — `npm run build` must pass with zero type errors.
+
+All project config fields must be wired end-to-end: `ProjectConfig` interface → `DEFAULT_CONFIG` → API handler destructure → UI `saveProject()` → UI render. Missing any link means the field silently drops on save.

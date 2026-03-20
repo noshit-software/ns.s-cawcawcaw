@@ -660,7 +660,7 @@ function renderProjects() {
           <div class="form-actions" style="margin-top:.8rem">
             <button class="btn btn-primary" id="ps-save-${name}" onclick="saveProject('${name}')" ${projectSavedState[name] === false ? '' : 'disabled'}>SAVE</button>
             <button class="btn" onclick="runCatchup('${name}')" ${!cfg.githubRepo ? 'disabled title="Set GitHub repo first"' : cfg.newCommits === 0 && cfg.lastCatchupCommit ? 'disabled' : ''}>${cfg.newCommits > 0 ? 'CATCHUP (' + cfg.newCommits + ' NEW)' : 'CATCHUP'}</button>
-            ${projectSavedState[name] === true ? '<span class="status-msg ok" style="margin-left:.5rem">SAVED</span>' : ''}
+            ${projectSavedState[name] === true ? '<span class="status-msg ok" id="ps-saved-' + name + '" style="margin-left:.5rem">SAVED</span>' : ''}
           </div>
           <div class="status-msg" id="ps-status-${name}"></div>
           <hr/>
@@ -683,7 +683,7 @@ function renderProjects() {
     // Listen on all inputs/textareas in this project
     const entry = document.getElementById('pe-' + name);
     if (entry) {
-      entry.querySelectorAll('input, textarea').forEach(el => {
+      entry.querySelectorAll('input, textarea, select').forEach(el => {
         el.addEventListener('input', () => markProjectDirty(name));
         el.addEventListener('change', () => markProjectDirty(name));
       });

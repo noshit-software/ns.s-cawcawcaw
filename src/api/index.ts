@@ -154,15 +154,17 @@ router.get('/projects/:name', (req, res) => {
 });
 
 router.post('/projects/:name', (req, res) => {
-  const { schedule, reviewRequired, platforms, githubRepo, philosophy, tagline } = req.body as {
+  const { schedule, reviewRequired, platforms, githubRepo, philosophy, voice, detailLevel, tagline } = req.body as {
     schedule?: string;
     reviewRequired?: boolean;
     platforms?: string[];
     githubRepo?: string;
     philosophy?: string;
+    voice?: string;
+    detailLevel?: string;
     tagline?: string;
   };
-  setProjectConfig(req.params.name, { schedule, reviewRequired, platforms, githubRepo, philosophy, tagline });
+  setProjectConfig(req.params.name, { schedule, reviewRequired, platforms, githubRepo, philosophy, voice, detailLevel, tagline });
   res.json({ ok: true });
 });
 
