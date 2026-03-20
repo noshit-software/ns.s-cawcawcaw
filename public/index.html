@@ -310,16 +310,39 @@ function selectPlatform(name) {
   document.querySelectorAll('.platform-row').forEach(r => r.classList.remove('selected'));
   document.getElementById('row-' + name)?.classList.add('selected');
   document.getElementById('config-title').textContent = 'CONFIGURE: ' + p.label.toUpperCase();
-  document.getElementById('config-fields').innerHTML = p.fields.map(f => `
-    <div class="field-row">
-      <span class="flabel">${f.label}</span><span class="farrow">▸</span>
-      <input class="finput" type="${f.secret ? 'password' : 'text'}" id="field-${f.key}"
-        placeholder="${f.placeholder || ''}" value="${f.configured ? '••••••••' : ''}"
-        autocomplete="off" spellcheck="false"/>
-    </div>`).join('');
+
+  if (p.oauth) {
+    // OAuth platform — show connect button instead of manual fields
+    document.getElementById('config-fields').innerHTML = p.configured
+      ? `<div style="margin:.6rem 0;color:var(--bright)">● CONNECTED</div>
+         <div style="color:var(--dim);font-size:.9em;margin-bottom:.6rem">Click RECONNECT to refresh credentials.</div>`
+      : `<div style="margin:.6rem 0;color:var(--dim)">Click CONNECT to authorize with ${p.label}.</div>`;
+    document.getElementById('config-form').style.display = 'block';
+    // Swap form actions to show connect/reconnect
+    const actionsEl = document.querySelector('.form-actions');
+    actionsEl.innerHTML = `
+      <button class="btn btn-primary" onclick="window.location.href='${p.oauth}'">${p.configured ? 'RECONNECT' : 'CONNECT'}</button>
+      ${p.configured ? '<button class="btn btn-danger" onclick="clearPlatform()">DISCONNECT</button>' : ''}
+      <button class="btn" onclick="closeConfig()">CANCEL</button>
+    `;
+  } else {
+    // Manual credential entry
+    document.getElementById('config-fields').innerHTML = p.fields.map(f => `
+      <div class="field-row">
+        <span class="flabel">${f.label}</span><span class="farrow">▸</span>
+        <input class="finput" type="${f.secret ? 'password' : 'text'}" id="field-${f.key}"
+          placeholder="${f.placeholder || ''}" value="${f.configured ? '••••••••' : ''}"
+          autocomplete="off" spellcheck="false"/>
+      </div>`).join('');
+    document.querySelector('.form-actions').innerHTML = `
+      <button class="btn btn-primary" onclick="savePlatform()">SAVE</button>
+      <button class="btn btn-danger" onclick="clearPlatform()">CLEAR</button>
+      <button class="btn" onclick="closeConfig()">CANCEL</button>
+    `;
+  }
+
   clearMsg('plat-status');
   document.getElementById('config-form').style.display = 'block';
-  document.getElementById('config-fields').querySelector('input')?.focus();
 }
 
 function closeConfig() {

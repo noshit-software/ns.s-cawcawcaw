@@ -24,6 +24,8 @@ export const config = {
 
   // Platform credentials — adapter is silently skipped if its block is incomplete
   linkedin: {
+    clientId: optional('LINKEDIN_CLIENT_ID'),
+    clientSecret: optional('LINKEDIN_CLIENT_SECRET'),
     accessToken: optional('LINKEDIN_ACCESS_TOKEN'),
     authorUrn: optional('LINKEDIN_AUTHOR_URN'),
   },

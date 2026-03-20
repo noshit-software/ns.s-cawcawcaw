@@ -9,12 +9,14 @@ export interface PlatformDef {
   label: string;
   description: string;
   fields: FieldDef[];
+  oauth?: string;  // URL path to start OAuth flow, e.g. '/auth/linkedin'
 }
 
 export const PLATFORM_MANIFEST: Record<string, PlatformDef> = {
   linkedin: {
     label: 'LinkedIn',
     description: 'Professional network',
+    oauth: '/auth/linkedin',
     fields: [
       { key: 'access_token', label: 'ACCESS TOKEN', secret: true, placeholder: 'OAuth 2.0 access token' },
       { key: 'author_urn', label: 'AUTHOR URN', secret: false, placeholder: 'urn:li:person:XXXXXXXXXX' },

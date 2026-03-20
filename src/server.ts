@@ -1,13 +1,16 @@
 import express from 'express';
+import cookieParser from 'cookie-parser';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { config } from './config.js';
 import { verifyGithubSignature, githubWebhookHandler } from './webhook/handler.js';
 import apiRouter from './api/index.js';
+import linkedinAuthRouter from './auth/linkedin.js';
 import { startScheduler } from './pipeline/scheduler.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
+app.use(cookieParser());
 
 // GitHub webhook — raw body required for HMAC verification
 app.use(
@@ -20,6 +23,9 @@ app.use(
   },
   githubWebhookHandler
 );
+
+// OAuth flows
+app.use('/auth', linkedinAuthRouter);
 
 // REST API
 app.use('/api', apiRouter);

@@ -23,6 +23,7 @@ router.get('/platforms', (_req, res) => {
       label: info.label,
       description: info.description,
       configured,
+      oauth: info.oauth ?? null,
       fields: info.fields.map(f => ({
         key: f.key,
         label: f.label,

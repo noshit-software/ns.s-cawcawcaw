@@ -55,7 +55,7 @@ Click **LinkedIn** → paste your credentials → **SAVE**.
 
 You need two things:
 
-- **Access Token** — a LinkedIn OAuth 2.0 token with `w_member_social` scope
+- **LinkedIn Client ID + Secret** — from your LinkedIn developer app (Auth tab). The UI handles the OAuth flow — just click CONNECT.
 - **Author URN** — your LinkedIn member ID in URN form. Get it by calling:
 
 ```bash
