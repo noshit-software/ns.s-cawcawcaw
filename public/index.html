@@ -471,14 +471,19 @@ async function loadQueue() {
     const list = document.getElementById('queue-list');
     if (!posts.length) { list.innerHTML = '<div class="empty">QUEUE IS EMPTY.</div>'; return; }
 
-    // Bulk action bar
-    const pendingIds = posts.filter(p => p.status === 'pending_review').map(p => p.id);
-    const approvedIds = posts.filter(p => p.status === 'approved').map(p => p.id);
+    // Bulk action bar — store IDs in JS, not inline attributes
+    window._bulkIds = {
+      pending: posts.filter(p => p.status === 'pending_review').map(p => p.id),
+      approved: posts.filter(p => p.status === 'approved').map(p => p.id),
+      all: posts.map(p => p.id),
+    };
+    const pendingCount = window._bulkIds.pending.length;
+    const approvedCount = window._bulkIds.approved.length;
     const bulkBar = `<div class="bulk-bar" style="margin-bottom:.8rem;display:flex;gap:.6rem;align-items:center">
-      ${pendingIds.length ? `<button class="btn btn-approve" onclick="bulkAction(${JSON.stringify(pendingIds)},'approve')">APPROVE ALL PENDING (${pendingIds.length})</button>` : ''}
-      ${pendingIds.length ? `<button class="btn btn-reject" onclick="bulkAction(${JSON.stringify(pendingIds)},'reject')">REJECT ALL PENDING</button>` : ''}
-      ${approvedIds.length ? `<button class="btn" onclick="bulkAction(${JSON.stringify(approvedIds)},'reject')">RESCIND ALL APPROVED</button>` : ''}
-      <button class="btn btn-danger" onclick="if(confirm('Delete all ${posts.length} visible posts?'))bulkAction(${JSON.stringify(posts.map(p=>p.id))},'delete')">DELETE ALL VISIBLE</button>
+      ${pendingCount ? `<button class="btn btn-approve" onclick="bulkAction(window._bulkIds.pending,'approve')">APPROVE ALL PENDING (${pendingCount})</button>` : ''}
+      ${pendingCount ? `<button class="btn btn-reject" onclick="bulkAction(window._bulkIds.pending,'reject')">REJECT ALL PENDING</button>` : ''}
+      ${approvedCount ? `<button class="btn" onclick="bulkAction(window._bulkIds.approved,'reject')">RESCIND ALL APPROVED</button>` : ''}
+      <button class="btn btn-danger" onclick="if(confirm('Delete all ${window._bulkIds.all.length} visible posts?'))bulkAction(window._bulkIds.all,'delete')">DELETE ALL VISIBLE</button>
     </div>`;
 
     list.innerHTML = posts.map(post => {
