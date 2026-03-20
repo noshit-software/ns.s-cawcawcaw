@@ -25,7 +25,13 @@ async function publishPost(post: Parameters<typeof getApproved>[0] extends (infe
     return;
   }
 
-  const results = await Promise.allSettled(adapters.map(a => a.publish(post.draft)));
+  // Append project tagline if set
+  const draft = { ...post.draft };
+  if (config.tagline) {
+    draft.body = draft.body.trimEnd() + '\n\n' + config.tagline;
+  }
+
+  const results = await Promise.allSettled(adapters.map(a => a.publish(draft)));
 
   const publishResults: PublishResult[] = results.map((r, i) => {
     if (r.status === 'fulfilled') return r.value;

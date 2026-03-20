@@ -24,7 +24,7 @@
 
     /* BACKGROUND CROW */
     .crow-bg { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; pointer-events:none; z-index:0; overflow:hidden; }
-    .crow-bg pre { font-family:'VT323', monospace; font-size:14px; line-height:1.15; color:var(--fg); opacity:.07; white-space:pre; user-select:none; }
+    .crow-bg pre { font-family:'VT323', monospace; font-size:14px; line-height:1.15; color:var(--fg); opacity:.04; white-space:pre; user-select:none; }
 
     /* HEADER */
     .header { display:flex; justify-content:space-between; align-items:baseline; border-bottom:1px solid var(--dim); padding-bottom:.3rem; margin-bottom:.6rem; }
@@ -96,7 +96,7 @@
     .qe-status.approved { color:var(--bright); }
     .qe-status.published { color:var(--dim); }
     .qe-status.rejected { color:var(--red); }
-    .qe-body { margin-top:.6rem; padding-top:.6rem; border-top:1px solid rgba(51,255,51,.08); color:var(--dim); font-size:.9em; line-height:1.5; white-space:pre-wrap; display:none; }
+    .qe-body { margin-top:.6rem; padding-top:.6rem; border-top:1px solid rgba(51,255,51,.08); color:var(--fg); font-size:.9em; line-height:1.5; white-space:pre-wrap; display:none; }
     .queue-entry.expanded .qe-body { display:block; }
     .qe-actions { margin-top:.6rem; display:flex; gap:1rem; }
     .qe-platforms { font-size:.8em; color:var(--dim); margin-top:.3rem; }
@@ -422,8 +422,9 @@ async function loadQueue() {
     const project = document.getElementById('queue-filter').value;
     const status = document.getElementById('queue-status-filter').value;
     const url = '/api/queue' + (project ? '?project=' + encodeURIComponent(project) : '');
-    const res = await fetch(url);
-    let posts = await res.json();
+    const [qRes, pRes] = await Promise.all([fetch(url), fetch('/api/projects')]);
+    let posts = await qRes.json();
+    const projectConfigs = await pRes.json();
     if (status) posts = posts.filter(p => p.status === status);
 
     // Populate project filter
@@ -450,6 +451,7 @@ async function loadQueue() {
       const editable = post.status === 'pending_review' || post.status === 'approved';
       const platforms = post.platforms.length ? post.platforms.join(' / ').toUpperCase() : 'ALL PLATFORMS';
       const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+      const tagline = projectConfigs[post.project]?.tagline || '';
       return `
         <div class="queue-entry ${isExpanded ? 'expanded' : ''}" id="qe-${post.id}" onclick="toggleQueue('${post.id}')">
           <div class="qe-header">
@@ -476,8 +478,12 @@ async function loadQueue() {
               <span class="flabel" style="width:8em">TAGS</span><span class="farrow">▸</span>
               <input class="finput" id="qe-edit-tags-${post.id}" value="${post.draft.tags.join(', ')}" placeholder="tag1, tag2, tag3" autocomplete="off" spellcheck="false"/>
             </div>
+            <div class="field-row" style="margin-bottom:.6rem">
+              <span class="flabel" style="width:8em">PHILOSOPHY</span><span class="farrow">▸</span>
+              <input class="finput" id="qe-edit-philosophy-${post.id}" value="${esc(post.draft.philosophyPoint)}" autocomplete="off" spellcheck="false"/>
+            </div>
           </div>` : isExpanded ? `
-          <div class="qe-body" style="display:block">${esc(post.draft.body)}
+          <div class="qe-body" style="display:block">${esc(post.draft.body)}${tagline ? '\n\n' + esc(tagline) : ''}
 
 TAGS: ${post.draft.tags.map(t=>'#'+t).join(' ')}
 PHILOSOPHY: ${esc(post.draft.philosophyPoint)}
@@ -517,11 +523,12 @@ async function saveEdit(id) {
   const body = document.getElementById('qe-edit-body-' + id)?.value;
   const tagsRaw = document.getElementById('qe-edit-tags-' + id)?.value || '';
   const tags = tagsRaw.split(',').map(t => t.trim()).filter(Boolean);
+  const philosophyPoint = document.getElementById('qe-edit-philosophy-' + id)?.value || '';
   try {
     const res = await fetch('/api/queue/' + id, {
       method: 'PATCH',
       headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ headline, body, tags })
+      body: JSON.stringify({ headline, body, tags, philosophyPoint })
     });
     if (!res.ok) throw new Error(await res.text());
     editingQueue.delete(id);
@@ -596,6 +603,11 @@ function renderProjects() {
             <span class="farrow" style="padding-top:.2rem">▸</span>
             <textarea class="pe-input" id="ps-philosophy-${name}" rows="4" style="resize:vertical;line-height:1.4;border:1px solid var(--dim);padding:.4rem" placeholder="What drives this project? What story are you telling?">${cfg.philosophy || ''}</textarea>
           </div>
+          <div class="pe-field">
+            <span class="pe-label">TAGLINE</span>
+            <span class="farrow">▸</span>
+            <input class="pe-input" id="ps-tagline-${name}" value="${cfg.tagline || ''}" placeholder="Appended to every post" autocomplete="off" spellcheck="false" />
+          </div>
           <div class="form-actions" style="margin-top:.8rem">
             <button class="btn btn-primary" onclick="saveProject('${name}')">SAVE</button>
             <button class="btn" onclick="runCatchup('${name}')" ${cfg.repoPath ? '' : 'disabled title="Set repo path first"'}>CATCHUP</button>
@@ -643,10 +655,11 @@ async function saveProject(name) {
   const platforms = [...platformChecks].map(c => c.value);
   const repoPath = document.getElementById('ps-repopath-' + name).value.trim();
   const philosophy = document.getElementById('ps-philosophy-' + name).value.trim();
+  const tagline = document.getElementById('ps-tagline-' + name).value.trim();
   try {
     const res = await fetch('/api/projects/' + encodeURIComponent(name), {
       method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ schedule, reviewRequired, platforms, repoPath, philosophy })
+      body: JSON.stringify({ schedule, reviewRequired, platforms, repoPath, philosophy, tagline })
     });
     if (!res.ok) throw new Error(await res.text());
     setMsg('ps-status-' + name, 'SAVED.', 'ok');

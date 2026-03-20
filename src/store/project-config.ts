@@ -9,6 +9,7 @@ export interface ProjectConfig {
   platforms: string[];    // empty = all configured platforms
   repoPath: string;       // local path to the git repo for catchup
   philosophy: string;     // guiding philosophy for post generation
+  tagline: string;        // fixed sign-off appended to every post
 }
 
 export const DEFAULT_CONFIG: ProjectConfig = {
@@ -17,6 +18,7 @@ export const DEFAULT_CONFIG: ProjectConfig = {
   platforms: [],
   repoPath: '',
   philosophy: '',
+  tagline: '',
 };
 
 type Store = Record<string, ProjectConfig>;
