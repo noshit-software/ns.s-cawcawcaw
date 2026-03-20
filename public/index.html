@@ -507,14 +507,15 @@ async function loadQueue() {
 TAGS: ${post.draft.tags.map(t=>'#'+t).join(' ')}
 PHILOSOPHY: ${esc(post.draft.philosophyPoint)}
           </div>` : ''}
-          ${isExpanded && editable ? `
+          ${isExpanded ? `
           <div class="qe-actions" onclick="event.stopPropagation()">
             ${isEditing ? `<button class="btn btn-primary" onclick="saveEdit('${post.id}')">SAVE</button>` : ''}
-            <button class="btn" onclick="${isEditing ? `cancelEdit('${post.id}')` : `startEdit('${post.id}')`}">${isEditing ? 'CANCEL EDIT' : 'EDIT'}</button>
+            ${editable ? `<button class="btn" onclick="${isEditing ? `cancelEdit('${post.id}')` : `startEdit('${post.id}')`}">${isEditing ? 'CANCEL EDIT' : 'EDIT'}</button>` : ''}
             ${!isEditing && post.status === 'pending_review' ? `<button class="btn btn-approve" onclick="queueAction('${post.id}','approve')">APPROVE</button>` : ''}
             ${!isEditing && post.status === 'approved' ? `<button class="btn btn-primary" onclick="publishPost('${post.id}')">PUBLISH NOW</button>` : ''}
             ${!isEditing && post.status === 'pending_review' ? `<button class="btn btn-reject" onclick="queueAction('${post.id}','reject')">REJECT</button>` : ''}
             ${!isEditing && post.status === 'approved' ? `<button class="btn" onclick="queueAction('${post.id}','reject')">RESCIND</button>` : ''}
+            ${!isEditing && (post.status === 'published' || post.status === 'rejected') ? `<button class="btn" onclick="queueAction('${post.id}','requeue')">RE-QUEUE</button>` : ''}
             ${!isEditing ? `<button class="btn btn-danger" onclick="queueAction('${post.id}','delete')">DELETE</button>` : ''}
           </div>` : ''}
         </div>`;

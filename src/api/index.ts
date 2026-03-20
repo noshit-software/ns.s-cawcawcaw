@@ -113,6 +113,11 @@ router.post('/queue/:id/reject', (req, res) => {
   res.json({ ok: true });
 });
 
+router.post('/queue/:id/requeue', (req, res) => {
+  updateStatus(req.params.id, 'pending_review');
+  res.json({ ok: true });
+});
+
 router.patch('/queue/:id', (req, res) => {
   const { headline, body, tags, philosophyPoint } = req.body as Record<string, unknown>;
   const draft: Record<string, unknown> = {};
