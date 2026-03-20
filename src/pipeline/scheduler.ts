@@ -5,8 +5,21 @@ import { type PublishResult } from '../publishers/types.js';
 import { recordPost } from '../store/post-history.js';
 import { logActivity } from '../activity/log.js';
 
-// Track last publish time globally — one post per day across all projects
-let lastPublishedGlobal: string | undefined;
+import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { join } from 'node:path';
+import { CAWCAWCAW_DIR } from '../store/paths.js';
+
+// Track last publish time globally — one post per day across all projects, persisted to disk
+const LAST_PUBLISH_PATH = join(CAWCAWCAW_DIR, 'last-publish.txt');
+
+function getLastPublishedGlobal(): string | undefined {
+  try { return existsSync(LAST_PUBLISH_PATH) ? readFileSync(LAST_PUBLISH_PATH, 'utf-8').trim() || undefined : undefined; }
+  catch { return undefined; }
+}
+
+function setLastPublishedGlobal(ts: string): void {
+  try { writeFileSync(LAST_PUBLISH_PATH, ts, 'utf-8'); } catch {}
+}
 
 const INTERVAL_MS = 60_000; // check every minute
 
@@ -48,7 +61,7 @@ async function publishPost(post: Parameters<typeof getApproved>[0] extends (infe
   }
 
   updateStatus(post.id, 'published');
-  lastPublishedGlobal = new Date().toISOString();
+  setLastPublishedGlobal(new Date().toISOString());
   recordPost(post.project, post.draft.headline, post.draft.philosophyPoint, post.draft.body);
   logActivity({ project: post.project, worthy: true, reason: post.draft.philosophyPoint, results: publishResults });
 }
@@ -58,8 +71,9 @@ async function tick(): Promise<void> {
   if (approved.length === 0) return;
 
   // Global rate limit — one post per day across all projects
-  if (lastPublishedGlobal) {
-    const last = new Date(lastPublishedGlobal);
+  const lastPublished = getLastPublishedGlobal();
+  if (lastPublished) {
+    const last = new Date(lastPublished);
     const now = new Date();
     if (last.getFullYear() === now.getFullYear() &&
         last.getMonth() === now.getMonth() &&
