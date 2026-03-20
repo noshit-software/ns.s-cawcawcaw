@@ -88,7 +88,14 @@
     .queue-entry { border:1px solid rgba(51,255,51,.12); padding:.6rem .8rem; margin-bottom:.6rem; cursor:pointer; }
     .queue-entry:hover { border-color:var(--dim); }
     .queue-entry.expanded { border-color:var(--dim); }
-    .qe-header { display:grid; grid-template-columns:8em 1fr auto; gap:.8rem; align-items:baseline; }
+    .qe-header { display:grid; grid-template-columns:8em 1fr auto auto; gap:.8rem; align-items:baseline; }
+    .qe-inline-actions { display:flex; gap:.3rem; }
+    .btn-inline { background:transparent; border:1px solid var(--dim); color:var(--fg); font:inherit; font-size:.85em; width:1.6em; height:1.6em; line-height:1; padding:0; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; }
+    .btn-inline:hover { background:var(--fg); color:var(--bg); text-shadow:none; }
+    .btn-inline.btn-approve { border-color:var(--fg); color:var(--bright); }
+    .btn-inline.btn-approve:hover { background:var(--bright); }
+    .btn-inline.btn-reject:hover { background:var(--amber); }
+    .btn-inline.btn-danger:hover { background:var(--red); }
     .qe-project { color:var(--dim); font-size:.85em; }
     .qe-headline { color:var(--fg); }
     .qe-meta { display:flex; gap:1rem; font-size:.8em; color:var(--dim); }
@@ -462,6 +469,16 @@ async function loadQueue() {
     const list = document.getElementById('queue-list');
     if (!posts.length) { list.innerHTML = '<div class="empty">QUEUE IS EMPTY.</div>'; return; }
 
+    // Bulk action bar
+    const pendingIds = posts.filter(p => p.status === 'pending_review').map(p => p.id);
+    const approvedIds = posts.filter(p => p.status === 'approved').map(p => p.id);
+    const bulkBar = `<div class="bulk-bar" style="margin-bottom:.8rem;display:flex;gap:.6rem;align-items:center">
+      ${pendingIds.length ? `<button class="btn btn-approve" onclick="bulkAction(${JSON.stringify(pendingIds)},'approve')">APPROVE ALL PENDING (${pendingIds.length})</button>` : ''}
+      ${pendingIds.length ? `<button class="btn btn-reject" onclick="bulkAction(${JSON.stringify(pendingIds)},'reject')">REJECT ALL PENDING</button>` : ''}
+      ${approvedIds.length ? `<button class="btn" onclick="bulkAction(${JSON.stringify(approvedIds)},'reject')">RESCIND ALL APPROVED</button>` : ''}
+      <button class="btn btn-danger" onclick="if(confirm('Delete all ${posts.length} visible posts?'))bulkAction(${JSON.stringify(posts.map(p=>p.id))},'delete')">DELETE ALL VISIBLE</button>
+    </div>`;
+
     list.innerHTML = posts.map(post => {
       const d = new Date(post.createdAt);
       const date = d.toLocaleDateString('en-US', {month:'2-digit',day:'2-digit'});
@@ -478,6 +495,13 @@ async function loadQueue() {
           <div class="qe-header">
             <span class="qe-project">${post.project}</span>
             <span class="qe-headline">${esc(post.draft.headline)}</span>
+            <span class="qe-inline-actions" onclick="event.stopPropagation()">
+              ${post.status === 'pending_review' ? `<button class="btn-inline btn-approve" onclick="queueAction('${post.id}','approve')">✓</button>` : ''}
+              ${post.status === 'pending_review' ? `<button class="btn-inline btn-reject" onclick="queueAction('${post.id}','reject')">✗</button>` : ''}
+              ${post.status === 'approved' ? `<button class="btn-inline" onclick="queueAction('${post.id}','reject')">↩</button>` : ''}
+              ${post.status === 'rejected' ? `<button class="btn-inline" onclick="queueAction('${post.id}','requeue')">↻</button>` : ''}
+              <button class="btn-inline btn-danger" onclick="queueAction('${post.id}','delete')">×</button>
+            </span>
             <span class="qe-status ${post.status}">${post.status.replace('_',' ').toUpperCase()}</span>
           </div>
           <div class="qe-meta">
@@ -522,7 +546,18 @@ PHILOSOPHY: ${esc(post.draft.philosophyPoint)}
           </div>` : ''}
         </div>`;
     }).join('');
+    list.innerHTML = bulkBar + list.innerHTML;
   } catch(e) { document.getElementById('queue-list').innerHTML = '<div class="empty">ERROR LOADING QUEUE.</div>'; }
+}
+
+async function bulkAction(ids, action) {
+  for (const id of ids) {
+    try {
+      if (action === 'delete') await fetch('/api/queue/' + id, {method:'DELETE'});
+      else await fetch('/api/queue/' + id + '/' + action, {method:'POST'});
+    } catch {}
+  }
+  await loadQueue();
 }
 
 function toggleQueue(id) {
