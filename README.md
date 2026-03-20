@@ -86,7 +86,7 @@ Press `3` for Projects → **+ ADD** your repo name → expand it and set:
 - **Schedule** — when the publish window opens: `05:00` (default), `09:00 weekdays`, `09:00 weekends`. One post per day total across all projects — oldest first.
 - **Review required** — if ON, posts sit at `pending_review` until you approve them in the Queue tab
 - **Platforms** — which platforms to post to (empty = all configured platforms)
-- **GitHub repo** — `owner/repo` format (e.g. `robertgardunia/ns.s-cawcawcaw`) — used for catchup via GitHub API
+- **GitHub repo** — `owner/repo` format (e.g. `noshit-software/ns.s-cawcawcaw`) — used for catchup via GitHub API. Hit **TEST** to verify the connection.
 - **Philosophy** — tells Claude what voice and tone to use when writing posts
 - **Tagline** — appended to every post at publish time (e.g. `CAW.`)
 

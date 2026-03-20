@@ -168,6 +168,20 @@ router.post('/projects/:name', (req, res) => {
 
 // ── CATCHUP ──────────────────────────────────────────────────
 
+router.get('/projects/:name/test-repo', async (req, res) => {
+  const config = getProjectConfig(req.params.name);
+  if (!config.githubRepo) { res.status(400).json({ error: 'No GitHub repo set' }); return; }
+  try {
+    const headers: Record<string, string> = { Accept: 'application/vnd.github+json' };
+    const ghToken = process.env.GITHUB_TOKEN;
+    if (ghToken) headers.Authorization = `Bearer ${ghToken}`;
+    const r = await fetch(`https://api.github.com/repos/${config.githubRepo}`, { headers });
+    if (!r.ok) throw new Error(`${r.status} — ${r.statusText}`);
+    const data = await r.json() as { full_name: string; private: boolean; default_branch: string; pushed_at: string };
+    res.json({ ok: true, repo: data.full_name, private: data.private, branch: data.default_branch, lastPush: data.pushed_at });
+  } catch (e) { res.status(400).json({ error: e instanceof Error ? e.message : String(e) }); }
+});
+
 router.post('/catchup', async (req, res) => {
   const { project } = req.body as { project: string };
   if (!project) { res.status(400).json({ error: 'project is required' }); return; }

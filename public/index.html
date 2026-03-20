@@ -628,6 +628,8 @@ function renderProjects() {
             <span class="pe-label">GITHUB REPO</span>
             <span class="farrow">▸</span>
             <input class="pe-input" id="ps-githubrepo-${name}" value="${cfg.githubRepo || ''}" placeholder="owner/repo" autocomplete="off" spellcheck="false" />
+            <button class="btn" style="font-size:.85em;padding:0 .5rem;flex-shrink:0" onclick="event.stopPropagation();testRepo('${name}')">TEST</button>
+            <span id="ps-repo-status-${name}" style="font-size:.85em;flex-shrink:0"></span>
           </div>
           <div class="pe-field" style="align-items:flex-start">
             <span class="pe-label" style="padding-top:.2rem">PHILOSOPHY</span>
@@ -675,6 +677,19 @@ function markProjectDirty(name) {
   const saved = document.getElementById('ps-saved-' + name);
   if (btn) btn.disabled = false;
   if (saved) saved.style.display = 'none';
+}
+
+async function testRepo(name) {
+  const el = document.getElementById('ps-repo-status-' + name);
+  if (el) { el.textContent = 'TESTING...'; el.style.color = 'var(--dim)'; }
+  try {
+    const res = await fetch('/api/projects/' + encodeURIComponent(name) + '/test-repo');
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+    if (el) { el.textContent = '● ' + data.repo + (data.private ? ' (PRIVATE)' : '') + ' — ' + data.branch; el.style.color = 'var(--bright)'; }
+  } catch(e) {
+    if (el) { el.textContent = '✗ ' + e.message; el.style.color = 'var(--red)'; }
+  }
 }
 
 function updatePlatformLabel(checkbox, name) {
