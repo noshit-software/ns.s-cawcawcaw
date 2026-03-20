@@ -548,6 +548,7 @@ PHILOSOPHY: ${esc(post.draft.philosophyPoint)}
     }).join('');
     list.innerHTML = bulkBar + list.innerHTML;
   } catch(e) { document.getElementById('queue-list').innerHTML = '<div class="empty">ERROR LOADING QUEUE.</div>'; }
+  updatePendingBadge();
 }
 
 async function bulkAction(ids, action) {
