@@ -767,8 +767,8 @@ async function addProject() {
 async function saveProject(name) {
   const schedule = document.getElementById('ps-schedule-' + name).value.trim();
   const reviewRequired = document.getElementById('ps-review-' + name).checked;
-  const platformChecks = document.querySelectorAll(`#ps-platforms-${name} input[type=checkbox]:checked`);
-  const platforms = [...platformChecks].map(c => c.value);
+  const platformEl = document.getElementById('ps-platforms-' + name);
+  const platforms = platformEl ? [...platformEl.querySelectorAll('input[type=checkbox]:checked')].map(c => c.value) : [];
   const githubRepo = document.getElementById('ps-githubrepo-' + name).value.trim();
   const philosophy = document.getElementById('ps-philosophy-' + name).value.trim();
   const voice = document.getElementById('ps-voice-' + name).value.trim();
