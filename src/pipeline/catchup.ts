@@ -103,6 +103,7 @@ Rules for every post you write:
 - No corporate speak
 - No bullet points in the body
 - Each post should stand alone and advance a distinct narrative beat
+- Vary your openings. Never start consecutive posts the same way. Avoid leading with "I built" or "I created" — find the problem, the moment, the question, the surprise. Mix it up.
 - Posts should be in chronological order — call queue_post in the order things happened${suppressionNote}
 
 Quality over quantity. If the history only has one real story, queue one post. If it has six, queue six.`,
