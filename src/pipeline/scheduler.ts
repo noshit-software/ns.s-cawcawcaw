@@ -88,8 +88,8 @@ export function publishNow(postId: string): Promise<void> {
 }
 
 export function startScheduler(): void {
-  console.log('[scheduler] Started (manual publish only — auto-schedule coming later)');
-  // Scheduler tick disabled — publishing is manual via PUBLISH NOW button
-  // When scheduled publishing is needed, re-enable:
-  // setInterval(() => tick().catch(err => console.error('[scheduler] Tick error:', err)), INTERVAL_MS);
+  console.log('[scheduler] Started (1 post/day per project)');
+  setInterval(() => {
+    tick().catch(err => console.error('[scheduler] Tick error:', err));
+  }, INTERVAL_MS);
 }

@@ -83,7 +83,7 @@ If you want a fallback for repos that don't have their own entry, create one at 
 
 Press `3` for Projects → **+ ADD** your repo name → expand it and set:
 
-- **Schedule** — when posts go out: `immediate`, `09:00`, `09:00 weekdays`, `09:00 weekends`
+- **Schedule** — when posts go out: `09:00` (default, one per day), `immediate`, `09:00 weekdays`, `09:00 weekends`
 - **Review required** — if ON, posts sit at `pending_review` until you approve them in the Queue tab
 - **Platforms** — which platforms to post to (empty = all configured platforms)
 - **Repo path** — the local path to the git repo on this machine (used for catchup)
