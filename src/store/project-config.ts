@@ -13,7 +13,7 @@ export interface ProjectConfig {
 }
 
 export const DEFAULT_CONFIG: ProjectConfig = {
-  schedule: '09:00',
+  schedule: '05:00',
   reviewRequired: false,
   platforms: [],
   repoPath: '',
