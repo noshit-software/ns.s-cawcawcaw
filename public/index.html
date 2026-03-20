@@ -493,8 +493,9 @@ PHILOSOPHY: ${esc(post.draft.philosophyPoint)}
             ${isEditing ? `<button class="btn btn-primary" onclick="saveEdit('${post.id}')">SAVE</button>` : ''}
             <button class="btn" onclick="${isEditing ? `cancelEdit('${post.id}')` : `startEdit('${post.id}')`}">${isEditing ? 'CANCEL EDIT' : 'EDIT'}</button>
             ${!isEditing && post.status === 'pending_review' ? `<button class="btn btn-approve" onclick="queueAction('${post.id}','approve')">APPROVE</button>` : ''}
+            ${!isEditing && post.status === 'approved' ? `<button class="btn btn-primary" onclick="publishPost('${post.id}')">PUBLISH NOW</button>` : ''}
             ${!isEditing && post.status === 'pending_review' ? `<button class="btn btn-reject" onclick="queueAction('${post.id}','reject')">REJECT</button>` : ''}
-            ${!isEditing && post.status === 'approved' ? `<button class="btn btn-danger" onclick="queueAction('${post.id}','reject')">RESCIND</button>` : ''}
+            ${!isEditing && post.status === 'approved' ? `<button class="btn" onclick="queueAction('${post.id}','reject')">RESCIND</button>` : ''}
             ${!isEditing ? `<button class="btn btn-danger" onclick="queueAction('${post.id}','delete')">DELETE</button>` : ''}
           </div>` : ''}
         </div>`;
@@ -540,6 +541,15 @@ async function queueAction(id, action) {
   try {
     if (action === 'delete') await fetch('/api/queue/' + id, {method:'DELETE'});
     else await fetch('/api/queue/' + id + '/' + action, {method:'POST'});
+    await loadQueue();
+  } catch(e) { console.error(e); }
+}
+
+async function publishPost(id) {
+  if (!confirm('Publish this post now?')) return;
+  try {
+    const res = await fetch('/api/queue/' + id + '/publish', {method:'POST'});
+    if (!res.ok) { const d = await res.json(); alert('Publish failed: ' + d.error); return; }
     await loadQueue();
   } catch(e) { console.error(e); }
 }

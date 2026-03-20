@@ -151,7 +151,7 @@ All posts — live and catchup — go through the queue.
 | `published` | Done |
 | `rejected` | Killed |
 
-In the Queue tab, click any post to expand it and read the full draft. Click **EDIT** to modify the headline, body, or tags before approving. Approve or reject from there.
+In the Queue tab, click any post to expand it and read the full draft. Click **EDIT** to modify the headline, body, or tags before approving. **APPROVE** marks the copy as ready. **PUBLISH NOW** sends it out — nothing goes live until you explicitly publish.
 
 ---
 

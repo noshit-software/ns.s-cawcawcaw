@@ -10,6 +10,7 @@ import { getPostHistory } from '../store/post-history.js';
 import { runCatchup, readGitLog } from '../pipeline/catchup.js';
 import { enqueue } from '../store/queue.js';
 import { updateNotes } from '../store/commit-buffer.js';
+import { publishNow } from '../pipeline/scheduler.js';
 
 const router = Router();
 router.use(json());
@@ -96,6 +97,15 @@ router.get('/queue', (req, res) => {
 router.post('/queue/:id/approve', (req, res) => {
   updateStatus(req.params.id, 'approved');
   res.json({ ok: true });
+});
+
+router.post('/queue/:id/publish', async (req, res) => {
+  try {
+    await publishNow(req.params.id);
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(400).json({ error: e instanceof Error ? e.message : String(e) });
+  }
 });
 
 router.post('/queue/:id/reject', (req, res) => {

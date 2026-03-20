@@ -80,12 +80,16 @@ async function tick(): Promise<void> {
   }
 }
 
-export function startScheduler(): void {
-  console.log('[scheduler] Started');
-  setInterval(() => {
-    tick().catch(err => console.error('[scheduler] Tick error:', err));
-  }, INTERVAL_MS);
+export function publishNow(postId: string): Promise<void> {
+  const approved = getApproved();
+  const post = approved.find(p => p.id === postId);
+  if (!post) throw new Error('Post not found or not approved');
+  return publishPost(post);
+}
 
-  // Also run immediately on start to pick up any approved posts
-  tick().catch(err => console.error('[scheduler] Initial tick error:', err));
+export function startScheduler(): void {
+  console.log('[scheduler] Started (manual publish only — auto-schedule coming later)');
+  // Scheduler tick disabled — publishing is manual via PUBLISH NOW button
+  // When scheduled publishing is needed, re-enable:
+  // setInterval(() => tick().catch(err => console.error('[scheduler] Tick error:', err)), INTERVAL_MS);
 }
