@@ -44,7 +44,7 @@ You should see:
 [scheduler] Started
 ```
 
-Runtime data is stored in `~/.cawcawcaw/`. It's created automatically on first run.
+Runtime data is stored in `~/.cawcawcaw/`. It's created automatically on first run. Project configs are stored in `~/.cawcawcaw/projects.json` — all fields merge with defaults on read and write, so new config fields are always safe to add.
 
 ---
 
@@ -84,7 +84,7 @@ If you want a fallback for repos that don't have their own entry, create one at 
 Press `3` for Projects → **+ ADD** your repo name → expand it and set:
 
 - **Schedule** — when the publish window opens: `05:00` (default), `09:00 weekdays`, `09:00 weekends`. One post per day total across all projects — oldest first. Rate limit persists across server restarts.
-- **Review required** — ON by default. Posts sit at `pending_review` until you approve them in the Queue tab
+- **Review required** — ON by default for new projects. Posts sit at `pending_review` until you approve them in the Queue tab. When OFF, posts are auto-approved and the scheduler will publish them at the next window
 - **Platforms** — which platforms to post to (empty = all configured platforms)
 - **GitHub repo** — `owner/repo` format (e.g. `noshit-software/ns.s-cawcawcaw`) — used for catchup via GitHub API. Hit **TEST** to verify the connection.
 - **Philosophy** — tells Claude what voice and tone to use when writing posts

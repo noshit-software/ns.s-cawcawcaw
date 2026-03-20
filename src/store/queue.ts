@@ -45,10 +45,17 @@ export function enqueue(
   reviewRequired: boolean
 ): QueuedPost {
   const store = load();
+  const safeDraft: PostDraft = {
+    headline: draft.headline ?? '',
+    body: draft.body ?? '',
+    tags: Array.isArray(draft.tags) ? draft.tags : [],
+    projectName: draft.projectName ?? project,
+    philosophyPoint: draft.philosophyPoint ?? '',
+  };
   const post: QueuedPost = {
     id: id(),
     project,
-    draft,
+    draft: safeDraft,
     status: reviewRequired ? 'pending_review' : 'approved',
     source,
     platforms,

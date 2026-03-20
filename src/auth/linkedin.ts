@@ -16,7 +16,7 @@ function getRedirectUri(req: { protocol: string; get(name: string): string | und
 router.get('/linkedin', (req, res) => {
   if (!config.linkedin.clientId || !config.linkedin.clientSecret) {
     res.status(500).json({
-      error: 'LINKEDIN_CLIENT_ID and LINKEDIN_CLIENT_SECRET must be set in src/.env',
+      error: 'LINKEDIN_CLIENT_ID and LINKEDIN_CLIENT_SECRET must be set in .env',
     });
     return;
   }

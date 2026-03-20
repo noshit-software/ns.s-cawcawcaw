@@ -97,7 +97,7 @@ Rules for every post you write:
 - No code snippets, no function names, no file paths
 - The story is the why, not the what
 - No sensitive information
-- First person, present tense, confident
+- First person singular ("I", never "we") — present tense, confident
 - No corporate speak
 - No bullet points in the body
 - Each post should stand alone and advance a distinct narrative beat

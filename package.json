@@ -4,11 +4,11 @@
   "type": "module",
   "description": "Commit to Caw — philosophy-driven devlog publisher",
   "scripts": {
-    "start": "tsx --env-file=src/.env src/server.ts",
+    "start": "tsx --env-file=.env src/server.ts",
     "build": "tsc",
-    "start:prod": "node dist/server.js",
+    "start:prod": "node --env-file=.env dist/server.js",
     "test": "node --experimental-test-snapshots --test 'test/**/*.test.ts'",
-    "linkedin-auth": "tsx --env-file=src/.env scripts/linkedin-auth.ts"
+    "linkedin-auth": "tsx --env-file=.env scripts/linkedin-auth.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",

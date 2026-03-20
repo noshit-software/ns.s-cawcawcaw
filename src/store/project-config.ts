@@ -44,7 +44,11 @@ export function getProjectConfig(project: string): ProjectConfig {
 
 export function setProjectConfig(project: string, config: Partial<ProjectConfig>): void {
   const store = load();
-  store[project] = { ...DEFAULT_CONFIG, ...(store[project] ?? {}), ...config };
+  // Filter out undefined values so they don't override existing/default fields
+  const defined = Object.fromEntries(
+    Object.entries(config).filter(([, v]) => v !== undefined)
+  );
+  store[project] = { ...DEFAULT_CONFIG, ...(store[project] ?? {}), ...defined };
   save(store);
 }
 
@@ -63,7 +67,11 @@ export function renameProject(oldName: string, newName: string): void {
 }
 
 export function getAllProjectConfigs(): Record<string, ProjectConfig> {
-  return load();
+  const store = load();
+  for (const name of Object.keys(store)) {
+    store[name] = { ...DEFAULT_CONFIG, ...store[name] };
+  }
+  return store;
 }
 
 // Schedule parsing

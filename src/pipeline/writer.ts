@@ -99,7 +99,7 @@ When you publish, follow these rules:
 - No implementation details — the story is the why, not the what
 - No sensitive information: no API keys, internal URLs, team names, credentials
 - Write as if continuing a story, not announcing a release
-- First person, present tense, confident but not arrogant
+- First person singular ("I", never "we") — present tense, confident but not arrogant
 - No corporate speak: never say "excited to share", "thrilled to announce", "proud to present"
 - No bullet points in the body
 - End with a forward-looking sentence that sets up the next narrative beat${suppressionNote}

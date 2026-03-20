@@ -469,7 +469,8 @@ async function loadQueue() {
       const isEditing = editingQueue.has(post.id);
       const editable = post.status === 'pending_review' || post.status === 'approved';
       const platforms = post.platforms.length ? post.platforms.join(' / ').toUpperCase() : 'ALL PLATFORMS';
-      const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+      const esc = s => (s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+      const tags = Array.isArray(post.draft.tags) ? post.draft.tags : [];
       const tagline = projectConfigs[post.project]?.tagline || '';
       return `
         <div class="queue-entry ${isExpanded ? 'expanded' : ''}" id="qe-${post.id}" onclick="toggleQueue('${post.id}')">
@@ -495,7 +496,7 @@ async function loadQueue() {
             </div>
             <div class="field-row" style="margin-bottom:.6rem">
               <span class="flabel" style="width:8em">TAGS</span><span class="farrow">▸</span>
-              <input class="finput" id="qe-edit-tags-${post.id}" value="${post.draft.tags.join(', ')}" placeholder="tag1, tag2, tag3" autocomplete="off" spellcheck="false"/>
+              <input class="finput" id="qe-edit-tags-${post.id}" value="${tags.join(', ')}" placeholder="tag1, tag2, tag3" autocomplete="off" spellcheck="false"/>
             </div>
             <div class="field-row" style="margin-bottom:.6rem">
               <span class="flabel" style="width:8em">PHILOSOPHY</span><span class="farrow">▸</span>
@@ -504,7 +505,7 @@ async function loadQueue() {
           </div>` : isExpanded ? `
           <div class="qe-body" style="display:block">${esc(post.draft.body)}${tagline ? '\n\n' + esc(tagline) : ''}
 
-TAGS: ${post.draft.tags.map(t=>'#'+t).join(' ')}
+TAGS: ${tags.map(t=>'#'+t).join(' ')}
 PHILOSOPHY: ${esc(post.draft.philosophyPoint)}
           </div>` : ''}
           ${isExpanded ? `
@@ -741,7 +742,7 @@ async function addProject() {
   if (!name) return;
   await fetch('/api/projects/' + encodeURIComponent(name), {
     method: 'POST', headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({ schedule: 'immediate', reviewRequired: false, platforms: [] })
+    body: JSON.stringify({})
   });
   document.getElementById('new-project-name').value = '';
   expandedProjects.add(name);
