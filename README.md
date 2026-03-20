@@ -255,3 +255,5 @@ Uses Node's built-in test runner with `tsx` for TypeScript support. Regression t
 - **project-config** — `DEFAULT_CONFIG` has `reviewRequired: true` (sev 1 fix), `setProjectConfig` filters undefined values, `getAllProjectConfigs` merges defaults into stored configs, `getProjectConfig` returns defaults for unknown projects
 - **queue** — `enqueue` handles missing/null tags (defaults to empty array), missing draft fields default to empty strings, `reviewRequired` flag correctly sets `pending_review` vs `approved` status
 - **scheduler** — `parseSchedule` correctly parses `immediate`, `HH:MM`, and `HH:MM weekdays/weekends` formats; `shouldPublishNow` always returns true for immediate schedules
+
+Build is strict — `npm run build` must pass with zero type errors.

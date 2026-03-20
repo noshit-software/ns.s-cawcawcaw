@@ -1,4 +1,4 @@
-import { getApproved, updateStatus } from '../store/queue.js';
+import { getApproved, updateStatus, type QueuedPost } from '../store/queue.js';
 import { getProjectConfig, parseSchedule, shouldPublishNow } from '../store/project-config.js';
 import { getEnabledAdapters } from '../publishers/registry.js';
 import { type PublishResult } from '../publishers/types.js';
@@ -23,7 +23,7 @@ function setLastPublishedGlobal(ts: string): void {
 
 const INTERVAL_MS = 60_000; // check every minute
 
-async function publishPost(post: Parameters<typeof getApproved>[0] extends (infer T)[] ? T : never): Promise<void> {
+async function publishPost(post: QueuedPost): Promise<void> {
   const config = getProjectConfig(post.project);
 
   // Determine which adapters to use — project targets filtered by what's configured
