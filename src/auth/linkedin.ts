@@ -12,6 +12,7 @@ function getRedirectUri(req: { protocol: string; get(name: string): string | und
 }
 
 // Step 1: Redirect user to LinkedIn consent screen
+// Optional ?account=<id> param to save credentials under a specific account
 router.get('/linkedin', (req, res) => {
   if (!config.linkedin.clientId || !config.linkedin.clientSecret) {
     res.status(500).json({
@@ -20,9 +21,11 @@ router.get('/linkedin', (req, res) => {
     return;
   }
 
+  const accountId = (req.query.account as string) || 'linkedin';
   const state = Math.random().toString(36).slice(2);
-  // Store state in a cookie so we can verify on callback
+  // Store state + account ID in cookies so we can use them on callback
   res.cookie('linkedin_oauth_state', state, { httpOnly: true, maxAge: 600_000 });
+  res.cookie('linkedin_oauth_account', accountId, { httpOnly: true, maxAge: 600_000 });
 
   const redirectUri = getRedirectUri(req);
   const authUrl =
@@ -31,7 +34,7 @@ router.get('/linkedin', (req, res) => {
     `&client_id=${config.linkedin.clientId}` +
     `&redirect_uri=${encodeURIComponent(redirectUri)}` +
     `&state=${state}` +
-    `&scope=${encodeURIComponent('w_member_social')}`;
+    `&scope=${encodeURIComponent('openid profile w_member_social')}`;
 
   res.redirect(authUrl);
 });
@@ -57,6 +60,7 @@ router.get('/linkedin/callback', async (req, res) => {
     return;
   }
 
+  const accountId = req.cookies?.linkedin_oauth_account || 'linkedin';
   const redirectUri = getRedirectUri(req);
 
   // Exchange code for token
@@ -120,7 +124,7 @@ router.get('/linkedin/callback', async (req, res) => {
 
   if (!authorUrn) {
     // Save the token anyway so they can manually add the URN
-    setCredentials('linkedin', { access_token: tokenData.access_token });
+    setCredentials(accountId, { access_token: tokenData.access_token });
     res.send(page('Partial Success',
       'Got the access token but could not resolve your author URN.<br><br>' +
       'Try enabling "Sign In with LinkedIn using OpenID Connect" on your app\'s Products tab, ' +
@@ -132,11 +136,11 @@ router.get('/linkedin/callback', async (req, res) => {
   }
 
   // Save both
-  setCredentials('linkedin', { access_token: tokenData.access_token, author_urn: authorUrn });
+  setCredentials(accountId, { access_token: tokenData.access_token, author_urn: authorUrn });
 
   const expiresDate = new Date(Date.now() + tokenData.expires_in * 1000).toLocaleDateString();
 
-  console.log(`[auth] LinkedIn connected — ${authorUrn}, expires ${expiresDate}`);
+  console.log(`[auth] LinkedIn connected (${accountId}) — ${authorUrn}, expires ${expiresDate}`);
 
   res.send(page('LinkedIn Connected',
     `Author URN: ${authorUrn}<br>` +

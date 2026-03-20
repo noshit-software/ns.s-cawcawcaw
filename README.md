@@ -148,7 +148,7 @@ All posts — live and catchup — go through the queue.
 | `published` | Done |
 | `rejected` | Killed |
 
-In the Queue tab, click any post to expand it and read the full draft. Approve or reject from there.
+In the Queue tab, click any post to expand it and read the full draft. Click **EDIT** to modify the headline, body, or tags before approving. Approve or reject from there.
 
 ---
 
@@ -157,6 +157,14 @@ In the Queue tab, click any post to expand it and read the full draft. Approve o
 Claude doesn't post on every push. It accumulates commits across pushes — sometimes 2, sometimes 12 — and decides when there's enough of a story to say something. When it waits, it leaves itself notes about what thread it's tracking and what it's looking for next. When it publishes, it carries forward notes about other threads still forming.
 
 It also tracks what it's already published so it doesn't rehash the same ground.
+
+---
+
+## Multiple accounts
+
+Each platform supports multiple named accounts. For example, you can have `LinkedIn / Personal` and `LinkedIn / Business` — each with its own credentials, each targetable independently from the Projects tab.
+
+In the Platforms tab, click any platform → **+ ADD** an account with a label → then CONNECT or configure credentials for that account.
 
 ---
 

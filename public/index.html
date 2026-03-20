@@ -47,7 +47,9 @@
     hr { border:none; border-top:1px solid var(--dim); margin:.8rem 0; }
 
     /* PLATFORM LIST */
-    .platform-row { display:grid; grid-template-columns:1.2em 14em 1fr; gap:.8rem; align-items:center; padding:.28rem 0; border-bottom:1px solid rgba(51,255,51,.07); cursor:pointer; }
+    .plat-grid { display:grid; grid-template-columns:1fr 1fr; gap:0 1.5rem; }
+    @media(max-width:600px) { .plat-grid { grid-template-columns:1fr; } }
+    .platform-row { display:grid; grid-template-columns:1.2em 1fr auto; gap:.6rem; align-items:center; padding:.28rem 0; border-bottom:1px solid rgba(51,255,51,.07); cursor:pointer; }
     .platform-row:hover .pname { color:var(--bright); }
     .parrow { color:var(--dim); text-align:center; }
     .platform-row.selected .parrow { color:var(--bright); }
@@ -67,6 +69,8 @@
     .finput { flex:1; background:transparent; border:none; border-bottom:1px solid var(--dim); color:var(--fg); font:inherit; text-shadow:inherit; padding:.1rem .3rem; outline:none; letter-spacing:.04em; min-width:0; }
     .finput:focus { border-bottom-color:var(--fg); color:var(--bright); }
     .finput::placeholder { color:var(--dim); opacity:.45; }
+    textarea.finput { border:1px solid var(--dim); border-bottom:1px solid var(--dim); padding:.4rem; }
+    textarea.finput:focus { border-color:var(--fg); }
     .form-actions { display:flex; gap:1.5rem; margin-top:1rem; flex-wrap:wrap; }
     .btn { background:transparent; border:1px solid var(--dim); color:var(--fg); font:inherit; text-shadow:inherit; padding:.1rem .9rem; cursor:pointer; letter-spacing:.1em; }
     .btn:hover { background:var(--fg); color:var(--bg); text-shadow:none; }
@@ -263,6 +267,7 @@ let platforms = [];
 let allPlatformNames = [];
 let selectedPlatform = null;
 let expandedQueue = new Set();
+let editingQueue = new Set();
 let expandedProjects = new Set();
 let projects = {};
 
@@ -294,44 +299,70 @@ async function loadPlatforms() {
     allPlatformNames = platforms.map(p => p.name);
     const configured = platforms.filter(p => p.configured).length;
     document.getElementById('plat-summary').textContent = `PLATFORMS  ▸  ${configured} CONFIGURED / ${platforms.length} AVAILABLE`;
-    document.getElementById('plat-list').innerHTML = platforms.map(p => `
+    document.getElementById('plat-list').innerHTML = '<div class="plat-grid">' + platforms.map(p => `
       <div class="platform-row ${p.configured ? 'ok' : ''}" id="row-${p.name}" onclick="selectPlatform('${p.name}')">
         <span class="parrow">${p.configured ? '►' : ' '}</span>
         <span class="pname">${p.label.toUpperCase()}</span>
-        <span class="pstatus">${p.configured ? '████ CONFIGURED' : '░░░░ NOT CONFIGURED'}</span>
-      </div>`).join('');
+        <span class="pstatus">${p.configured ? '██ OK' : '░░'}</span>
+      </div>`).join('') + '</div>';
   } catch { document.getElementById('plat-summary').textContent = 'ERROR LOADING PLATFORMS.'; }
 }
 
-function selectPlatform(name) {
+// selectedAccount tracks which account ID we're configuring (null = base platform)
+let selectedAccount = null;
+
+function selectPlatform(name, accountId) {
   selectedPlatform = name;
+  selectedAccount = accountId || null;
   const p = platforms.find(x => x.name === name);
   if (!p) return;
   document.querySelectorAll('.platform-row').forEach(r => r.classList.remove('selected'));
-  document.getElementById('row-' + name)?.classList.add('selected');
-  document.getElementById('config-title').textContent = 'CONFIGURE: ' + p.label.toUpperCase();
+  const credKey = selectedAccount || name;
+
+  const title = selectedAccount
+    ? p.label.toUpperCase() + ' / ' + (p.accounts.find(a => a.id === selectedAccount)?.label || selectedAccount).toUpperCase()
+    : p.label.toUpperCase();
+  document.getElementById('config-title').textContent = 'CONFIGURE: ' + title;
+
+  // Build accounts list
+  const accountsHtml = `
+    <div style="margin-bottom:.8rem">
+      <div style="color:var(--dim);font-size:.85em;letter-spacing:.08em;margin-bottom:.3rem">ACCOUNTS</div>
+      ${p.accounts.length ? p.accounts.map(a => `
+        <div style="display:flex;align-items:center;gap:.6rem;padding:.2rem 0;border-bottom:1px solid rgba(51,255,51,.07)">
+          <span style="color:${a.configured ? 'var(--bright)' : 'var(--dim)'}">${a.configured ? '●' : '○'}</span>
+          <span style="color:var(--fg);cursor:pointer;flex:1" onclick="event.stopPropagation();selectPlatform('${name}','${a.id}')">${a.label.toUpperCase()}</span>
+          <button class="btn btn-danger" style="font-size:.8em;padding:0 .5rem" onclick="event.stopPropagation();removeAccountUI('${a.id}')">✕</button>
+        </div>`).join('') : ''}
+      <div style="display:flex;gap:.6rem;margin-top:.4rem" onclick="event.stopPropagation()">
+        <input class="finput" id="new-account-label" style="flex:1" placeholder="e.g. Personal, Business" autocomplete="off" spellcheck="false"/>
+        <button class="btn" style="font-size:.85em" onclick="addAccountUI('${name}')">+ ADD</button>
+      </div>
+    </div>
+    <hr/>
+  `;
+
+  const configTarget = selectedAccount || name;
+  const isConfigured = selectedAccount
+    ? p.accounts.find(a => a.id === selectedAccount)?.configured
+    : p.fields.every(f => f.configured);
 
   if (p.oauth) {
-    // OAuth platform — show connect button instead of manual fields
-    document.getElementById('config-fields').innerHTML = p.configured
+    document.getElementById('config-fields').innerHTML = accountsHtml + (isConfigured
       ? `<div style="margin:.6rem 0;color:var(--bright)">● CONNECTED</div>
          <div style="color:var(--dim);font-size:.9em;margin-bottom:.6rem">Click RECONNECT to refresh credentials.</div>`
-      : `<div style="margin:.6rem 0;color:var(--dim)">Click CONNECT to authorize with ${p.label}.</div>`;
-    document.getElementById('config-form').style.display = 'block';
-    // Swap form actions to show connect/reconnect
-    const actionsEl = document.querySelector('.form-actions');
-    actionsEl.innerHTML = `
-      <button class="btn btn-primary" onclick="window.location.href='${p.oauth}'">${p.configured ? 'RECONNECT' : 'CONNECT'}</button>
-      ${p.configured ? '<button class="btn btn-danger" onclick="clearPlatform()">DISCONNECT</button>' : ''}
+      : `<div style="margin:.6rem 0;color:var(--dim)">Click CONNECT to authorize with ${p.label}.</div>`);
+    document.querySelector('.form-actions').innerHTML = `
+      <button class="btn btn-primary" onclick="window.location.href='${p.oauth}?account=${configTarget}'">${isConfigured ? 'RECONNECT' : 'CONNECT'}</button>
+      ${isConfigured ? `<button class="btn btn-danger" onclick="clearPlatform()">DISCONNECT</button>` : ''}
       <button class="btn" onclick="closeConfig()">CANCEL</button>
     `;
   } else {
-    // Manual credential entry
-    document.getElementById('config-fields').innerHTML = p.fields.map(f => `
+    document.getElementById('config-fields').innerHTML = accountsHtml + p.fields.map(f => `
       <div class="field-row">
         <span class="flabel">${f.label}</span><span class="farrow">▸</span>
         <input class="finput" type="${f.secret ? 'password' : 'text'}" id="field-${f.key}"
-          placeholder="${f.placeholder || ''}" value="${f.configured ? '••••••••' : ''}"
+          placeholder="${f.placeholder || ''}" value=""
           autocomplete="off" spellcheck="false"/>
       </div>`).join('');
     document.querySelector('.form-actions').innerHTML = `
@@ -345,6 +376,28 @@ function selectPlatform(name) {
   document.getElementById('config-form').style.display = 'block';
 }
 
+async function addAccountUI(platformType) {
+  const label = document.getElementById('new-account-label')?.value?.trim();
+  if (!label) return;
+  try {
+    await fetch('/api/accounts', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ type: platformType, label })
+    });
+    await loadPlatforms();
+    selectPlatform(platformType);
+  } catch(e) { console.error(e); }
+}
+
+async function removeAccountUI(accountId) {
+  try {
+    await fetch('/api/accounts/' + accountId, { method: 'DELETE' });
+    await loadPlatforms();
+    if (selectedPlatform) selectPlatform(selectedPlatform);
+  } catch(e) { console.error(e); }
+}
+
 function closeConfig() {
   document.getElementById('config-form').style.display = 'none';
   document.querySelectorAll('.platform-row').forEach(r => r.classList.remove('selected'));
@@ -355,13 +408,14 @@ async function savePlatform() {
   if (!selectedPlatform) return;
   const p = platforms.find(x => x.name === selectedPlatform);
   if (!p) return;
+  const credKey = selectedAccount || selectedPlatform;
   const creds = {};
   for (const f of p.fields) {
     const el = document.getElementById('field-' + f.key);
     if (el && el.value && el.value !== '••••••••') creds[f.key] = el.value;
   }
   try {
-    const res = await fetch('/api/platforms/' + selectedPlatform, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(creds) });
+    const res = await fetch('/api/platforms/' + credKey, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(creds) });
     if (!res.ok) throw new Error((await res.json()).error || res.statusText);
     setMsg('plat-status', 'SAVED.', 'ok');
     await loadPlatforms();
@@ -371,8 +425,9 @@ async function savePlatform() {
 
 async function clearPlatform() {
   if (!selectedPlatform) return;
+  const credKey = selectedAccount || selectedPlatform;
   try {
-    await fetch('/api/platforms/' + selectedPlatform, { method:'DELETE' });
+    await fetch('/api/platforms/' + credKey, { method:'DELETE' });
     setMsg('plat-status', 'CLEARED.', 'ok');
     await loadPlatforms();
     closeConfig();
@@ -409,12 +464,15 @@ async function loadQueue() {
       const date = d.toLocaleDateString('en-US', {month:'2-digit',day:'2-digit'});
       const time = d.toLocaleTimeString('en-US', {hour12:false,hour:'2-digit',minute:'2-digit'});
       const isExpanded = expandedQueue.has(post.id);
+      const isEditing = editingQueue.has(post.id);
+      const editable = post.status === 'pending_review' || post.status === 'approved';
       const platforms = post.platforms.length ? post.platforms.join(' / ').toUpperCase() : 'ALL PLATFORMS';
+      const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
       return `
         <div class="queue-entry ${isExpanded ? 'expanded' : ''}" id="qe-${post.id}" onclick="toggleQueue('${post.id}')">
           <div class="qe-header">
             <span class="qe-project">${post.project}</span>
-            <span class="qe-headline">${post.draft.headline}</span>
+            <span class="qe-headline">${esc(post.draft.headline)}</span>
             <span class="qe-status ${post.status}">${post.status.replace('_',' ').toUpperCase()}</span>
           </div>
           <div class="qe-meta">
@@ -422,17 +480,34 @@ async function loadQueue() {
             <span>${post.source.toUpperCase()}</span>
             <span>${platforms}</span>
           </div>
-          <div class="qe-body">${post.draft.body}
+          ${isExpanded && isEditing ? `
+          <div class="qe-body" style="display:block" onclick="event.stopPropagation()">
+            <div class="field-row" style="align-items:flex-start;margin-bottom:.6rem">
+              <span class="flabel" style="width:8em">HEADLINE</span><span class="farrow">▸</span>
+              <input class="finput" id="qe-edit-headline-${post.id}" value="${esc(post.draft.headline)}" autocomplete="off" spellcheck="false"/>
+            </div>
+            <div class="field-row" style="align-items:flex-start;margin-bottom:.6rem">
+              <span class="flabel" style="width:8em">BODY</span><span class="farrow">▸</span>
+              <textarea class="finput" id="qe-edit-body-${post.id}" rows="8" style="resize:vertical;line-height:1.4">${esc(post.draft.body)}</textarea>
+            </div>
+            <div class="field-row" style="margin-bottom:.6rem">
+              <span class="flabel" style="width:8em">TAGS</span><span class="farrow">▸</span>
+              <input class="finput" id="qe-edit-tags-${post.id}" value="${post.draft.tags.join(', ')}" placeholder="tag1, tag2, tag3" autocomplete="off" spellcheck="false"/>
+            </div>
+          </div>` : isExpanded ? `
+          <div class="qe-body" style="display:block">${esc(post.draft.body)}
 
 TAGS: ${post.draft.tags.map(t=>'#'+t).join(' ')}
-PHILOSOPHY: ${post.draft.philosophyPoint}
-          </div>
-          ${isExpanded && (post.status === 'pending_review' || post.status === 'approved') ? `
+PHILOSOPHY: ${esc(post.draft.philosophyPoint)}
+          </div>` : ''}
+          ${isExpanded && editable ? `
           <div class="qe-actions" onclick="event.stopPropagation()">
-            ${post.status === 'pending_review' ? `<button class="btn btn-approve" onclick="queueAction('${post.id}','approve')">APPROVE</button>` : ''}
-            ${post.status === 'pending_review' ? `<button class="btn btn-reject" onclick="queueAction('${post.id}','reject')">REJECT</button>` : ''}
-            ${post.status === 'approved' ? `<button class="btn btn-danger" onclick="queueAction('${post.id}','reject')">RESCIND</button>` : ''}
-            <button class="btn btn-danger" onclick="queueAction('${post.id}','delete')">DELETE</button>
+            ${isEditing ? `<button class="btn btn-primary" onclick="saveEdit('${post.id}')">SAVE</button>` : ''}
+            <button class="btn" onclick="${isEditing ? `cancelEdit('${post.id}')` : `startEdit('${post.id}')`}">${isEditing ? 'CANCEL EDIT' : 'EDIT'}</button>
+            ${!isEditing && post.status === 'pending_review' ? `<button class="btn btn-approve" onclick="queueAction('${post.id}','approve')">APPROVE</button>` : ''}
+            ${!isEditing && post.status === 'pending_review' ? `<button class="btn btn-reject" onclick="queueAction('${post.id}','reject')">REJECT</button>` : ''}
+            ${!isEditing && post.status === 'approved' ? `<button class="btn btn-danger" onclick="queueAction('${post.id}','reject')">RESCIND</button>` : ''}
+            ${!isEditing ? `<button class="btn btn-danger" onclick="queueAction('${post.id}','delete')">DELETE</button>` : ''}
           </div>` : ''}
         </div>`;
     }).join('');
@@ -440,9 +515,36 @@ PHILOSOPHY: ${post.draft.philosophyPoint}
 }
 
 function toggleQueue(id) {
-  if (expandedQueue.has(id)) expandedQueue.delete(id);
+  if (expandedQueue.has(id)) { expandedQueue.delete(id); editingQueue.delete(id); }
   else expandedQueue.add(id);
   loadQueue();
+}
+
+function startEdit(id) {
+  editingQueue.add(id);
+  loadQueue();
+}
+
+function cancelEdit(id) {
+  editingQueue.delete(id);
+  loadQueue();
+}
+
+async function saveEdit(id) {
+  const headline = document.getElementById('qe-edit-headline-' + id)?.value;
+  const body = document.getElementById('qe-edit-body-' + id)?.value;
+  const tagsRaw = document.getElementById('qe-edit-tags-' + id)?.value || '';
+  const tags = tagsRaw.split(',').map(t => t.trim()).filter(Boolean);
+  try {
+    const res = await fetch('/api/queue/' + id, {
+      method: 'PATCH',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ headline, body, tags })
+    });
+    if (!res.ok) throw new Error(await res.text());
+    editingQueue.delete(id);
+    await loadQueue();
+  } catch(e) { console.error('Save failed:', e); }
 }
 
 async function queueAction(id, action) {

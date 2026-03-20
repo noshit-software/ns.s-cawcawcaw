@@ -2,7 +2,8 @@ import { Router, json } from 'express';
 import { PLATFORM_MANIFEST } from '../publishers/manifest.js';
 import { getCredential, setCredentials, clearCredentials } from '../store/credentials.js';
 import { getActivity } from '../activity/log.js';
-import { getQueue, updateStatus, removeFromQueue } from '../store/queue.js';
+import { getAllAccounts, addAccount, removeAccount, getAccountsByType } from '../store/accounts.js';
+import { getQueue, updateStatus, updateDraft, removeFromQueue } from '../store/queue.js';
 import { getProjectConfig, setProjectConfig, getAllProjectConfigs } from '../store/project-config.js';
 import { fetchPhilosophy } from '../philosophy/client.js';
 import { getPostHistory } from '../store/post-history.js';
@@ -16,32 +17,40 @@ router.use(json());
 // ── PLATFORMS ────────────────────────────────────────────────
 
 router.get('/platforms', (_req, res) => {
+  const allAccounts = getAllAccounts();
   const platforms = Object.entries(PLATFORM_MANIFEST).map(([name, info]) => {
-    const configured = info.fields.every(f => !!getCredential(name, f.key));
+    const accounts = allAccounts.filter(a => a.type === name).map(a => ({
+      id: a.id,
+      label: a.label,
+      configured: info.fields.every(f => !!getCredential(a.id, f.key)),
+    }));
+    // Also check if the base platform name has credentials (legacy / single-account)
+    const baseConfigured = info.fields.every(f => !!getCredential(name, f.key));
     return {
       name,
       label: info.label,
       description: info.description,
-      configured,
+      configured: baseConfigured || accounts.some(a => a.configured),
       oauth: info.oauth ?? null,
+      accounts,
       fields: info.fields.map(f => ({
         key: f.key,
         label: f.label,
         secret: f.secret,
         placeholder: f.placeholder ?? '',
         configured: !!getCredential(name, f.key),
-        value: f.secret
-          ? (getCredential(name, f.key) ? '••••••••' : '')
-          : (getCredential(name, f.key) ?? ''),
       })),
     };
   });
   res.json(platforms);
 });
 
+// Save credentials for a platform or account
 router.post('/platforms/:name', (req, res) => {
   const { name } = req.params;
-  const info = PLATFORM_MANIFEST[name];
+  // name could be a base platform (e.g. 'linkedin') or an account ID (e.g. 'linkedin-personal')
+  const baseName = name.includes('-') ? name.split('-')[0] : name;
+  const info = PLATFORM_MANIFEST[baseName] || PLATFORM_MANIFEST[name];
   if (!info) { res.status(404).json({ error: 'Unknown platform' }); return; }
 
   const creds: Record<string, string> = {};
@@ -57,8 +66,23 @@ router.post('/platforms/:name', (req, res) => {
 
 router.delete('/platforms/:name', (req, res) => {
   const { name } = req.params;
-  if (!PLATFORM_MANIFEST[name]) { res.status(404).json({ error: 'Unknown platform' }); return; }
   clearCredentials(name);
+  res.json({ ok: true });
+});
+
+// ── ACCOUNTS ─────────────────────────────────────────────────
+
+router.post('/accounts', (req, res) => {
+  const { type, label } = req.body as { type: string; label: string };
+  if (!type || !label) { res.status(400).json({ error: 'type and label required' }); return; }
+  if (!PLATFORM_MANIFEST[type]) { res.status(404).json({ error: 'Unknown platform type' }); return; }
+  const account = addAccount(type, label);
+  res.json(account);
+});
+
+router.delete('/accounts/:id', (req, res) => {
+  clearCredentials(req.params.id);
+  removeAccount(req.params.id);
   res.json({ ok: true });
 });
 
@@ -76,6 +100,17 @@ router.post('/queue/:id/approve', (req, res) => {
 
 router.post('/queue/:id/reject', (req, res) => {
   updateStatus(req.params.id, 'rejected');
+  res.json({ ok: true });
+});
+
+router.patch('/queue/:id', (req, res) => {
+  const { headline, body, tags, philosophyPoint } = req.body as Record<string, unknown>;
+  const draft: Record<string, unknown> = {};
+  if (typeof headline === 'string') draft.headline = headline;
+  if (typeof body === 'string') draft.body = body;
+  if (Array.isArray(tags)) draft.tags = tags;
+  if (typeof philosophyPoint === 'string') draft.philosophyPoint = philosophyPoint;
+  updateDraft(req.params.id, draft as Partial<import('../publishers/types.js').PostDraft>);
   res.json({ ok: true });
 });
 

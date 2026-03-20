@@ -78,6 +78,15 @@ export function updateStatus(postId: string, status: QueueStatus): void {
   save(store);
 }
 
+export function updateDraft(postId: string, draft: Partial<PostDraft>): void {
+  const store = load();
+  const post = store.find(p => p.id === postId);
+  if (!post) return;
+  post.draft = { ...post.draft, ...draft };
+  post.updatedAt = new Date().toISOString();
+  save(store);
+}
+
 export function removeFromQueue(postId: string): void {
   save(load().filter(p => p.id !== postId));
 }
