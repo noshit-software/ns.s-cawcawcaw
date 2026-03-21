@@ -197,7 +197,10 @@
   <div class="header">
     <span class="logo">]CAWCAWCAW<span class="cursor"></span></span>
     <span id="pending-badge" style="color:var(--amber);font-size:.85em;letter-spacing:.08em"></span>
-    <span class="brand">NOSHIT SOFTWARE</span>
+    <span style="display:flex;align-items:baseline;gap:1rem">
+      <span id="auth-area"></span>
+      <span class="brand">NOSHIT SOFTWARE</span>
+    </span>
   </div>
 
   <div class="tabs">
@@ -248,7 +251,7 @@
   <div class="panel" id="panel-projects">
     <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:.4rem">
       <div class="slabel">PROJECT CONFIGURATION</div>
-      <div style="display:flex;gap:.8rem;align-items:center">
+      <div id="project-add-controls" style="display:flex;gap:.8rem;align-items:center">
         <input id="new-project-name" class="finput" style="width:16em" placeholder="project-name" spellcheck="false" autocomplete="off" />
         <button class="btn btn-primary" onclick="addProject()" style="white-space:nowrap">+ ADD</button>
       </div>
@@ -280,6 +283,8 @@ let expandedQueue = new Set();
 let editingQueue = new Set();
 let expandedProjects = new Set();
 let projects = {};
+let authed = false;
+let authRequired = false;
 
 // ── STATE PERSISTENCE ─────────────────────────────────────────
 function saveState() {
@@ -479,12 +484,12 @@ async function loadQueue() {
     };
     const pendingCount = window._bulkIds.pending.length;
     const approvedCount = window._bulkIds.approved.length;
-    const bulkBar = `<div class="bulk-bar" style="margin-bottom:.8rem;display:flex;gap:.6rem;align-items:center">
+    const bulkBar = authed ? `<div class="bulk-bar" style="margin-bottom:.8rem;display:flex;gap:.6rem;align-items:center">
       ${pendingCount ? `<button class="btn btn-approve" onclick="bulkAction(window._bulkIds.pending,'approve')">APPROVE ALL PENDING (${pendingCount})</button>` : ''}
       ${pendingCount ? `<button class="btn btn-reject" onclick="bulkAction(window._bulkIds.pending,'reject')">REJECT ALL PENDING</button>` : ''}
       ${approvedCount ? `<button class="btn" onclick="bulkAction(window._bulkIds.approved,'reject')">RESCIND ALL APPROVED</button>` : ''}
       <button class="btn btn-danger" onclick="if(confirm('Delete all ${window._bulkIds.all.length} visible posts?'))bulkAction(window._bulkIds.all,'delete')">DELETE ALL VISIBLE</button>
-    </div>`;
+    </div>` : '';
 
     list.innerHTML = posts.map(post => {
       const d = new Date(post.createdAt);
@@ -502,13 +507,13 @@ async function loadQueue() {
           <div class="qe-header">
             <span class="qe-project">${post.project}</span>
             <span class="qe-headline">${esc(post.draft.headline)}</span>
-            <span class="qe-inline-actions" onclick="event.stopPropagation()">
+            ${authed ? `<span class="qe-inline-actions" onclick="event.stopPropagation()">
               ${post.status === 'pending_review' ? `<button class="btn-inline btn-approve" onclick="queueAction('${post.id}','approve')">✓</button>` : ''}
               ${post.status === 'pending_review' ? `<button class="btn-inline btn-reject" onclick="queueAction('${post.id}','reject')">✗</button>` : ''}
               ${post.status === 'approved' ? `<button class="btn-inline" onclick="queueAction('${post.id}','reject')">↩</button>` : ''}
               ${post.status === 'rejected' ? `<button class="btn-inline" onclick="queueAction('${post.id}','requeue')">↻</button>` : ''}
               <button class="btn-inline btn-danger" onclick="queueAction('${post.id}','delete')">×</button>
-            </span>
+            </span>` : ''}
             <span class="qe-status ${post.status}">${post.status.replace('_',' ').toUpperCase()}</span>
           </div>
           <div class="qe-meta">
@@ -540,7 +545,7 @@ async function loadQueue() {
 TAGS: ${tags.map(t=>'#'+t).join(' ')}
 PHILOSOPHY: ${esc(post.draft.philosophyPoint)}
           </div>` : ''}
-          ${isExpanded ? `
+          ${isExpanded && authed ? `
           <div class="qe-actions" onclick="event.stopPropagation()">
             ${isEditing ? `<button class="btn btn-primary" onclick="saveEdit('${post.id}')">SAVE</button>` : ''}
             ${editable ? `<button class="btn" onclick="${isEditing ? `cancelEdit('${post.id}')` : `startEdit('${post.id}')`}">${isEditing ? 'CANCEL EDIT' : 'EDIT'}</button>` : ''}
@@ -632,6 +637,8 @@ async function loadProjects() {
 }
 
 function renderProjects() {
+  const addControls = document.getElementById('project-add-controls');
+  if (addControls) addControls.style.display = authed ? '' : 'none';
   const names = Object.keys(projects);
   if (!names.length) { document.getElementById('project-list').innerHTML = '<div class="empty">NO PROJECTS CONFIGURED.</div>'; return; }
 
@@ -639,7 +646,8 @@ function renderProjects() {
   document.getElementById('project-list').innerHTML = names.map(name => {
     const cfg = projects[name];
     const isExpanded = expandedProjects.has(name);
-    const summary = [cfg.schedule, cfg.reviewRequired ? 'REVIEW ON' : 'AUTO', cfg.platforms.length ? cfg.platforms.join('/').toUpperCase() : 'ALL'].join('  ·  ');
+    const vis = cfg.visibility === 'public' ? 'PUBLIC' : 'PRIVATE';
+    const summary = [vis, cfg.schedule, cfg.reviewRequired ? 'REVIEW ON' : 'AUTO', cfg.platforms.length ? cfg.platforms.join('/').toUpperCase() : 'ALL'].join('  ·  ');
     return `
       <div class="project-entry ${isExpanded ? 'expanded' : ''}" id="pe-${name}">
         <div class="pe-header" onclick="toggleProject('${name}')">
@@ -650,13 +658,13 @@ function renderProjects() {
           <div class="pe-field">
             <span class="pe-label">SCHEDULE</span>
             <span class="farrow">▸</span>
-            <input class="pe-input" id="ps-schedule-${name}" value="${escAttr(cfg.schedule)}" placeholder="immediate / 09:00 / 09:00 weekdays" autocomplete="off" spellcheck="false" />
+            <input class="pe-input" id="ps-schedule-${name}" value="${escAttr(cfg.schedule)}" placeholder="immediate / 09:00 / 09:00 weekdays" autocomplete="off" spellcheck="false" ${!authed ? 'disabled' : ''}/>
           </div>
           <div class="pe-field">
             <span class="pe-label">REVIEW REQUIRED</span>
             <span class="farrow">▸</span>
             <div class="pe-toggle">
-              <input type="checkbox" class="pe-checkbox" id="ps-review-${name}" ${cfg.reviewRequired ? 'checked' : ''} />
+              <input type="checkbox" class="pe-checkbox" id="ps-review-${name}" ${cfg.reviewRequired ? 'checked' : ''} ${!authed ? 'disabled' : ''}/>
               <span style="color:var(--dim);font-size:.9em" id="ps-review-label-${name}">${cfg.reviewRequired ? 'ON' : 'OFF'}</span>
             </div>
           </div>
@@ -675,8 +683,8 @@ function renderProjects() {
           <div class="pe-field">
             <span class="pe-label">GITHUB REPO</span>
             <span class="farrow">▸</span>
-            <input class="pe-input" id="ps-githubrepo-${name}" value="${escAttr(cfg.githubRepo)}" placeholder="owner/repo" autocomplete="off" spellcheck="false" />
-            <button class="btn" style="font-size:.85em;padding:0 .5rem;flex-shrink:0" onclick="event.stopPropagation();testRepo('${name}')">TEST</button>
+            <input class="pe-input" id="ps-githubrepo-${name}" value="${escAttr(cfg.githubRepo)}" placeholder="owner/repo" autocomplete="off" spellcheck="false" ${!authed ? 'disabled' : ''}/>
+            ${authed ? `<button class="btn" style="font-size:.85em;padding:0 .5rem;flex-shrink:0" onclick="event.stopPropagation();testRepo('${name}')">TEST</button>` : ''}
             <span id="ps-repo-status-${name}" style="font-size:.85em;flex-shrink:0"></span>
           </div>
           <div class="pe-field" style="align-items:flex-start">
@@ -701,21 +709,29 @@ function renderProjects() {
           <div class="pe-field">
             <span class="pe-label">TAGLINE</span>
             <span class="farrow">▸</span>
-            <input class="pe-input" id="ps-tagline-${name}" value="${escAttr(cfg.tagline)}" placeholder="Appended to every post" autocomplete="off" spellcheck="false" />
+            <input class="pe-input" id="ps-tagline-${name}" value="${escAttr(cfg.tagline)}" placeholder="Appended to every post" autocomplete="off" spellcheck="false" ${!authed ? 'disabled' : ''}/>
           </div>
-          <div class="form-actions" style="margin-top:.8rem">
+          ${authed ? `<div class="pe-field">
+            <span class="pe-label">VISIBILITY</span>
+            <span class="farrow">▸</span>
+            <div class="pe-toggle">
+              <input type="checkbox" class="pe-checkbox" id="ps-visibility-${name}" ${cfg.visibility === 'public' ? 'checked' : ''} />
+              <span style="color:var(--dim);font-size:.9em" id="ps-visibility-label-${name}">${cfg.visibility === 'public' ? 'PUBLIC' : 'PRIVATE'}</span>
+            </div>
+          </div>` : ''}
+          ${authed ? `<div class="form-actions" style="margin-top:.8rem">` : `<div style="display:none">`}
             <button class="btn btn-primary" id="ps-save-${name}" onclick="saveProject('${name}')" ${projectSavedState[name] === false ? '' : 'disabled'}>SAVE</button>
             <button class="btn" onclick="runCatchup('${name}')" ${!cfg.githubRepo ? 'disabled title="Set GitHub repo first"' : cfg.newCommits === 0 && cfg.lastCatchupCommit ? 'disabled' : ''}>${cfg.newCommits > 0 ? 'CATCHUP (' + cfg.newCommits + ' NEW)' : 'CATCHUP'}</button>
             ${cfg.lastCatchupCommit ? `<button class="btn" onclick="resetCatchup('${name}')" title="Clear catchup history and regenerate all posts">RESET CATCHUP</button>` : ''}
             ${projectSavedState[name] === true ? '<span class="status-msg ok" id="ps-saved-' + name + '" style="margin-left:.5rem">SAVED</span>' : ''}
           </div>
           <div class="status-msg" id="ps-status-${name}"></div>
-          <hr/>
+          ${authed ? `<hr/>
           <div style="display:flex;gap:.6rem;align-items:center">
             <input class="pe-input" id="ps-rename-${name}" value="${name}" style="flex:1" autocomplete="off" spellcheck="false"/>
             <button class="btn" onclick="renameProjectUI('${name}')">RENAME</button>
             <button class="btn btn-danger" onclick="deleteProjectUI('${name}')">DELETE</button>
-          </div>
+          </div>` : ''}
         </div>
       </div>`;
   }).join('');
@@ -725,6 +741,11 @@ function renderProjects() {
     const cb = document.getElementById('ps-review-' + name);
     if (cb) cb.addEventListener('change', () => {
       document.getElementById('ps-review-label-' + name).textContent = cb.checked ? 'ON' : 'OFF';
+      markProjectDirty(name);
+    });
+    const vis = document.getElementById('ps-visibility-' + name);
+    if (vis) vis.addEventListener('change', () => {
+      document.getElementById('ps-visibility-label-' + name).textContent = vis.checked ? 'PUBLIC' : 'PRIVATE';
       markProjectDirty(name);
     });
     // Listen on all inputs/textareas in this project
@@ -821,10 +842,12 @@ async function saveProject(name) {
   const voice = document.getElementById('ps-voice-' + name).value.trim();
   const detailLevel = document.getElementById('ps-detaillevel-' + name).value;
   const tagline = document.getElementById('ps-tagline-' + name).value.trim();
+  const visEl = document.getElementById('ps-visibility-' + name);
+  const visibility = visEl?.checked ? 'public' : 'private';
   try {
     const res = await fetch('/api/projects/' + encodeURIComponent(name), {
       method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ schedule, reviewRequired, platforms, githubRepo, philosophy, voice, detailLevel, tagline })
+      body: JSON.stringify({ schedule, reviewRequired, platforms, githubRepo, philosophy, voice, detailLevel, tagline, visibility })
     });
     if (!res.ok) throw new Error(await res.text());
     projectSavedState[name] = true;
@@ -966,10 +989,73 @@ async function updatePendingBadge() {
 }
 setInterval(updatePendingBadge, 30000);
 
+// ── AUTH ──────────────────────────────────────────────────────
+async function checkAuth() {
+  try {
+    const res = await fetch('/auth/status');
+    const data = await res.json();
+    authed = data.authenticated;
+    authRequired = data.authRequired;
+  } catch { authed = false; authRequired = false; }
+  renderAuth();
+  updateTabVisibility();
+}
+
+function renderAuth() {
+  const el = document.getElementById('auth-area');
+  if (!authRequired) { el.innerHTML = ''; return; }
+  if (authed) {
+    el.innerHTML = `<button class="btn" style="font-size:.75em;padding:0 .5rem" onclick="doLogout()">LOGOUT</button>`;
+  } else {
+    el.innerHTML = `<input type="password" id="auth-pw" class="finput" style="width:10em;font-size:.75em" placeholder="PASSWORD" autocomplete="off"
+      onkeydown="if(event.key==='Enter')doLogin()"/>
+      <button class="btn" style="font-size:.75em;padding:0 .5rem;margin-left:.3rem" onclick="doLogin()">LOGIN</button>`;
+  }
+}
+
+function updateTabVisibility() {
+  // Hide platforms tab for unauthenticated users
+  const platTab = document.querySelector('.tab[data-tab="platforms"]');
+  if (platTab) platTab.style.display = (authed || !authRequired) ? '' : 'none';
+  // If on platforms tab and not authed, switch to queue
+  if (!authed && authRequired && currentTab === 'platforms') switchTab('queue');
+}
+
+async function doLogin() {
+  const pw = document.getElementById('auth-pw')?.value;
+  if (!pw) return;
+  try {
+    const res = await fetch('/auth/login', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ password: pw })
+    });
+    if (!res.ok) { const el = document.getElementById('auth-pw'); if (el) { el.value = ''; el.style.borderBottomColor = 'var(--red)'; } return; }
+    authed = true;
+    renderAuth();
+    updateTabVisibility();
+    // Reload current tab data
+    switchTab(currentTab);
+    loadPlatforms();
+    updatePendingBadge();
+  } catch {}
+}
+
+async function doLogout() {
+  try { await fetch('/auth/logout', { method: 'POST' }); } catch {}
+  authed = false;
+  renderAuth();
+  updateTabVisibility();
+  switchTab('queue');
+  updatePendingBadge();
+}
+
 // ── INIT ──────────────────────────────────────────────────────
-loadPlatforms();
-switchTab(currentTab);
-updatePendingBadge();
+(async () => {
+  await checkAuth();
+  if (authed || !authRequired) loadPlatforms();
+  switchTab(currentTab);
+  updatePendingBadge();
+})();
 </script>
 </body>
 </html>

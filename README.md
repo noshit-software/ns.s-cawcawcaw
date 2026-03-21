@@ -112,6 +112,7 @@ The OAuth flow handles everything — access token, refresh token, author URN. A
 | **Voice** | Writing perspective per project. Default: first person singular, present tense, confident. Override for different tones. |
 | **Detail level** | How deep posts go. `high-level` = why, not what. `moderate` = what was built, not how. `technical` = architecture and design decisions. |
 | **Tagline** | Appended to every post at publish time. |
+| **Visibility** | `private` (default) or `public`. Public projects and their queue items are visible to unauthenticated visitors. Private projects are completely hidden without login. |
 
 Hit **SAVE**. Projects can be renamed or deleted from the expanded view.
 
@@ -223,7 +224,18 @@ pm2 start dist/server.js --name cawcawcaw
 pm2 save && pm2 startup
 ```
 
-Put nginx or caddy in front for HTTPS if the UI needs to be reachable externally. The app sets `trust proxy` so it correctly reads `X-Forwarded-Proto` for OAuth redirect URIs behind reverse proxies (Cloudflare, nginx, etc.). **Keep the UI behind auth** — it exposes credential management.
+Put nginx or caddy in front for HTTPS if the UI needs to be reachable externally. The app sets `trust proxy` so it correctly reads `X-Forwarded-Proto` for OAuth redirect URIs behind reverse proxies (Cloudflare, nginx, etc.).
+
+### Authentication
+
+Set `UI_PASSWORD` in `.env` to enable login. Without it, the UI is fully open.
+
+When enabled:
+- **Public projects** — their queue items, project configs (read-only), and activity are visible to anyone. The UI hides all action buttons. Think live demo.
+- **Private projects** — invisible without login. API returns 404.
+- **All write operations** — require login. Approve, reject, delete, edit, save, catchup, platform management — all locked.
+- **Platforms tab** — hidden entirely without login.
+- Session is cookie-based, expires after 7 days. Login prompt is in the header.
 
 Runtime data in `data/` — back it up. Specifically:
 - `credentials.json` — OAuth tokens

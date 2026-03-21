@@ -11,13 +11,14 @@ import { runCatchup, fetchGitHubCommits, getNewCommitCount } from '../pipeline/c
 import { enqueue } from '../store/queue.js';
 import { updateNotes } from '../store/commit-buffer.js';
 import { publishNow } from '../pipeline/scheduler.js';
+import { isAuthenticated, requireAuth } from '../auth/session.js';
 
 const router = Router();
 router.use(json());
 
-// ── PLATFORMS ────────────────────────────────────────────────
+// ── PLATFORMS (auth required — never public) ─────────────────
 
-router.get('/platforms', (_req, res) => {
+router.get('/platforms', requireAuth, (_req, res) => {
   const allAccounts = getAllAccounts();
   const platforms = Object.entries(PLATFORM_MANIFEST).map(([name, info]) => {
     const accounts = allAccounts.filter(a => a.type === name).map(a => ({
@@ -47,7 +48,7 @@ router.get('/platforms', (_req, res) => {
 });
 
 // Save credentials for a platform or account
-router.post('/platforms/:name', (req, res) => {
+router.post('/platforms/:name', requireAuth, (req, res) => {
   const { name } = req.params;
   // name could be a base platform (e.g. 'linkedin') or an account ID (e.g. 'linkedin-personal')
   const baseName = name.includes('-') ? name.split('-')[0] : name;
@@ -65,15 +66,15 @@ router.post('/platforms/:name', (req, res) => {
   res.json({ ok: true });
 });
 
-router.delete('/platforms/:name', (req, res) => {
+router.delete('/platforms/:name', requireAuth, (req, res) => {
   const { name } = req.params;
   clearCredentials(name);
   res.json({ ok: true });
 });
 
-// ── ACCOUNTS ─────────────────────────────────────────────────
+// ── ACCOUNTS (auth required) ─────────────────────────────────
 
-router.post('/accounts', (req, res) => {
+router.post('/accounts', requireAuth, (req, res) => {
   const { type, label } = req.body as { type: string; label: string };
   if (!type || !label) { res.status(400).json({ error: 'type and label required' }); return; }
   if (!PLATFORM_MANIFEST[type]) { res.status(404).json({ error: 'Unknown platform type' }); return; }
@@ -81,7 +82,7 @@ router.post('/accounts', (req, res) => {
   res.json(account);
 });
 
-router.delete('/accounts/:id', (req, res) => {
+router.delete('/accounts/:id', requireAuth, (req, res) => {
   clearCredentials(req.params.id);
   removeAccount(req.params.id);
   res.json({ ok: true });
@@ -91,15 +92,21 @@ router.delete('/accounts/:id', (req, res) => {
 
 router.get('/queue', (req, res) => {
   const { project } = req.query as Record<string, string>;
-  res.json(getQueue(project));
+  let posts = getQueue(project);
+  if (!isAuthenticated(req)) {
+    const configs = getAllProjectConfigs();
+    const publicProjects = new Set(Object.entries(configs).filter(([, c]) => c.visibility === 'public').map(([n]) => n));
+    posts = posts.filter(p => publicProjects.has(p.project));
+  }
+  res.json(posts);
 });
 
-router.post('/queue/:id/approve', (req, res) => {
+router.post('/queue/:id/approve', requireAuth, (req, res) => {
   updateStatus(req.params.id, 'approved');
   res.json({ ok: true });
 });
 
-router.post('/queue/:id/publish', async (req, res) => {
+router.post('/queue/:id/publish', requireAuth, async (req, res) => {
   try {
     await publishNow(req.params.id);
     res.json({ ok: true });
@@ -108,17 +115,17 @@ router.post('/queue/:id/publish', async (req, res) => {
   }
 });
 
-router.post('/queue/:id/reject', (req, res) => {
+router.post('/queue/:id/reject', requireAuth, (req, res) => {
   updateStatus(req.params.id, 'rejected');
   res.json({ ok: true });
 });
 
-router.post('/queue/:id/requeue', (req, res) => {
+router.post('/queue/:id/requeue', requireAuth, (req, res) => {
   updateStatus(req.params.id, 'pending_review');
   res.json({ ok: true });
 });
 
-router.patch('/queue/:id', (req, res) => {
+router.patch('/queue/:id', requireAuth, (req, res) => {
   const { headline, body, tags, philosophyPoint } = req.body as Record<string, unknown>;
   const draft: Record<string, unknown> = {};
   if (typeof headline === 'string') draft.headline = headline;
@@ -129,7 +136,7 @@ router.patch('/queue/:id', (req, res) => {
   res.json({ ok: true });
 });
 
-router.post('/queue/batch', (req, res) => {
+router.post('/queue/batch', requireAuth, (req, res) => {
   const { ids, action } = req.body as { ids: string[]; action: string };
   if (!Array.isArray(ids) || !action) { res.status(400).json({ error: 'ids and action required' }); return; }
   for (const id of ids) {
@@ -141,32 +148,44 @@ router.post('/queue/batch', (req, res) => {
   res.json({ ok: true, count: ids.length });
 });
 
-router.delete('/queue/:id', (req, res) => {
+router.delete('/queue/:id', requireAuth, (req, res) => {
   removeFromQueue(req.params.id);
   res.json({ ok: true });
 });
 
 // ── PROJECTS ─────────────────────────────────────────────────
 
-router.get('/projects', async (_req, res) => {
+router.get('/projects', async (req, res) => {
   const configs = getAllProjectConfigs();
+  const authed = isAuthenticated(req);
   const enriched: Record<string, unknown> = {};
   for (const [name, cfg] of Object.entries(configs)) {
+    if (!authed && cfg.visibility !== 'public') continue;
     let newCommits = 0;
-    if (cfg.githubRepo && cfg.lastCatchupCommit) {
+    if (authed && cfg.githubRepo && cfg.lastCatchupCommit) {
       try { newCommits = await getNewCommitCount(cfg.githubRepo, cfg.lastCatchupCommit); } catch {}
     }
-    enriched[name] = { ...cfg, newCommits };
+    const project = authed ? { ...cfg, newCommits } : {
+      schedule: cfg.schedule, philosophy: cfg.philosophy, tagline: cfg.tagline,
+      voice: cfg.voice, detailLevel: cfg.detailLevel, visibility: cfg.visibility,
+      platforms: cfg.platforms, reviewRequired: cfg.reviewRequired,
+    };
+    enriched[name] = project;
   }
   res.json(enriched);
 });
 
 router.get('/projects/:name', (req, res) => {
-  res.json(getProjectConfig(req.params.name));
+  const cfg = getProjectConfig(req.params.name);
+  if (!isAuthenticated(req) && cfg.visibility !== 'public') {
+    res.status(404).json({ error: 'Not found' });
+    return;
+  }
+  res.json(cfg);
 });
 
-router.post('/projects/:name', (req, res) => {
-  const { schedule, reviewRequired, platforms, githubRepo, philosophy, voice, detailLevel, tagline, lastCatchupCommit } = req.body as {
+router.post('/projects/:name', requireAuth, (req, res) => {
+  const { schedule, reviewRequired, platforms, githubRepo, philosophy, voice, detailLevel, tagline, visibility, lastCatchupCommit } = req.body as {
     schedule?: string;
     reviewRequired?: boolean;
     platforms?: string[];
@@ -175,18 +194,19 @@ router.post('/projects/:name', (req, res) => {
     voice?: string;
     detailLevel?: string;
     tagline?: string;
+    visibility?: 'public' | 'private';
     lastCatchupCommit?: string;
   };
-  setProjectConfig(req.params.name, { schedule, reviewRequired, platforms, githubRepo, philosophy, voice, detailLevel, tagline, lastCatchupCommit });
+  setProjectConfig(req.params.name, { schedule, reviewRequired, platforms, githubRepo, philosophy, voice, detailLevel, tagline, visibility, lastCatchupCommit });
   res.json({ ok: true });
 });
 
-router.delete('/projects/:name', (req, res) => {
+router.delete('/projects/:name', requireAuth, (req, res) => {
   deleteProject(req.params.name);
   res.json({ ok: true });
 });
 
-router.post('/projects/:name/rename', (req, res) => {
+router.post('/projects/:name/rename', requireAuth, (req, res) => {
   const { newName } = req.body as { newName: string };
   if (!newName?.trim()) { res.status(400).json({ error: 'newName required' }); return; }
   renameProject(req.params.name, newName.trim());
@@ -195,7 +215,7 @@ router.post('/projects/:name/rename', (req, res) => {
 
 // ── CATCHUP ──────────────────────────────────────────────────
 
-router.get('/test-repo', async (req, res) => {
+router.get('/test-repo', requireAuth, async (req, res) => {
   const repo = req.query.repo as string;
   if (!repo) { res.status(400).json({ error: 'No repo specified' }); return; }
   try {
@@ -209,7 +229,7 @@ router.get('/test-repo', async (req, res) => {
   } catch (e) { res.status(400).json({ error: e instanceof Error ? e.message : String(e) }); }
 });
 
-router.post('/catchup', async (req, res) => {
+router.post('/catchup', requireAuth, async (req, res) => {
   const { project } = req.body as { project: string };
   if (!project) { res.status(400).json({ error: 'project is required' }); return; }
 
@@ -262,7 +282,13 @@ router.post('/catchup', async (req, res) => {
 
 router.get('/activity', (req, res) => {
   const limit = Math.min(parseInt((req.query['limit'] as string) ?? '50', 10) || 50, 100);
-  res.json(getActivity(limit));
+  let entries = getActivity(limit);
+  if (!isAuthenticated(req)) {
+    const configs = getAllProjectConfigs();
+    const publicProjects = new Set(Object.entries(configs).filter(([, c]) => c.visibility === 'public').map(([n]) => n));
+    entries = entries.filter((e: { project?: string }) => e.project && publicProjects.has(e.project));
+  }
+  res.json(entries);
 });
 
 export default router;

@@ -21,6 +21,7 @@ export const config = {
   githubWebhookSecret: required('GITHUB_WEBHOOK_SECRET'),
   anthropicApiKey: required('ANTHROPIC_API_KEY'),
   knightsrookMcpUrl: optional('KNIGHTSROOK_MCP_URL'),
+  uiPassword: optional('UI_PASSWORD'),
 
   // Platform credentials — adapter is silently skipped if its block is incomplete
   linkedin: {

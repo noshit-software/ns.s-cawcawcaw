@@ -12,6 +12,7 @@ export interface ProjectConfig {
   tagline: string;        // fixed sign-off appended to every post
   voice: string;          // writing voice/perspective — injected into system prompt
   detailLevel: string;    // how technical/deep posts should go
+  visibility: 'public' | 'private'; // public = visible to unauthenticated users
   lastCatchupCommit: string; // SHA of the last commit processed by catchup
 }
 
@@ -24,6 +25,7 @@ export const DEFAULT_CONFIG: ProjectConfig = {
   tagline: '',
   voice: 'First person singular ("I", never "we"). Present tense. Confident but not arrogant.',
   detailLevel: 'high-level',
+  visibility: 'private' as const,
   lastCatchupCommit: '',
 };
 

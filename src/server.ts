@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { json } from 'express';
 import cookieParser from 'cookie-parser';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -6,6 +6,7 @@ import { config } from './config.js';
 import { verifyGithubSignature, githubWebhookHandler } from './webhook/handler.js';
 import apiRouter from './api/index.js';
 import linkedinAuthRouter from './auth/linkedin.js';
+import { login, logout, authStatus } from './auth/session.js';
 import { startScheduler } from './pipeline/scheduler.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -24,6 +25,11 @@ app.use(
   },
   githubWebhookHandler
 );
+
+// Auth endpoints
+app.post('/auth/login', json(), login);
+app.post('/auth/logout', logout);
+app.get('/auth/status', authStatus);
 
 // OAuth flows
 app.use('/auth', linkedinAuthRouter);
