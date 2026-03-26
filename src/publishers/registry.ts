@@ -3,7 +3,7 @@ import { LinkedInAdapter } from './linkedin/adapter.js';
 import { BlueskyAdapter } from './bluesky/adapter.js';
 // import { TwitterAdapter } from './twitter/adapter.js';
 // import { DiscordAdapter } from './discord/adapter.js';
-// import { MastodonAdapter } from './mastodon/adapter.js';
+import { MastodonAdapter } from './mastodon/adapter.js';
 // import { RedditAdapter } from './reddit/adapter.js';
 import { DevtoAdapter } from './devto/adapter.js';
 import { HashnodeAdapter } from './hashnode/adapter.js';
@@ -20,7 +20,7 @@ const ALL_ADAPTERS: PublisherAdapter[] = [
   new BlueskyAdapter(),
   // new TwitterAdapter(),
   // new DiscordAdapter(),
-  // new MastodonAdapter(),
+  new MastodonAdapter(),
   // new RedditAdapter(),
   new DevtoAdapter(),
   new FacebookAdapter(),
