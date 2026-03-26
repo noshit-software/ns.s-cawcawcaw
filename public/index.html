@@ -531,6 +531,11 @@ async function loadQueue() {
               <span class="flabel" style="width:8em">BODY</span><span class="farrow">▸</span>
               <textarea class="finput" id="qe-edit-body-${post.id}" rows="8" style="resize:vertical;line-height:1.4">${esc(post.draft.body)}</textarea>
             </div>
+            <div class="field-row" style="align-items:flex-start;margin-bottom:.6rem">
+              <span class="flabel" style="width:8em">SHORT</span><span class="farrow">▸</span>
+              <textarea class="finput" id="qe-edit-summary-${post.id}" rows="3" maxlength="280" style="resize:vertical;line-height:1.4" placeholder="Short-form version for Bluesky/Twitter (280 chars)">${esc(post.draft.summary || '')}</textarea>
+              <span style="color:var(--dim);font-size:.75rem;margin-left:.5rem">${(post.draft.summary || '').length}/280</span>
+            </div>
             <div class="field-row" style="margin-bottom:.6rem">
               <span class="flabel" style="width:8em">TAGS</span><span class="farrow">▸</span>
               <input class="finput" id="qe-edit-tags-${post.id}" value="${tags.join(', ')}" placeholder="tag1, tag2, tag3" autocomplete="off" spellcheck="false"/>
@@ -541,7 +546,7 @@ async function loadQueue() {
             </div>
           </div>` : isExpanded ? `
           <div class="qe-body" style="display:block">${esc(post.draft.body)}${tagline ? '\n\n' + esc(tagline) : ''}
-
+${post.draft.summary ? `\n<span style="color:var(--accent);font-size:.85rem">SHORT ▸</span> ${esc(post.draft.summary)}` : ''}
 TAGS: ${tags.map(t=>'#'+t).join(' ')}
 PHILOSOPHY: ${esc(post.draft.philosophyPoint)}
           </div>` : ''}
@@ -595,6 +600,7 @@ function cancelEdit(id) {
 async function saveEdit(id) {
   const headline = document.getElementById('qe-edit-headline-' + id)?.value;
   const body = document.getElementById('qe-edit-body-' + id)?.value;
+  const summary = document.getElementById('qe-edit-summary-' + id)?.value || '';
   const tagsRaw = document.getElementById('qe-edit-tags-' + id)?.value || '';
   const tags = tagsRaw.split(',').map(t => t.trim()).filter(Boolean);
   const philosophyPoint = document.getElementById('qe-edit-philosophy-' + id)?.value || '';
@@ -602,7 +608,7 @@ async function saveEdit(id) {
     const res = await fetch('/api/queue/' + id, {
       method: 'PATCH',
       headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ headline, body, tags, philosophyPoint })
+      body: JSON.stringify({ headline, body, summary, tags, philosophyPoint })
     });
     if (!res.ok) throw new Error(await res.text());
     editingQueue.delete(id);

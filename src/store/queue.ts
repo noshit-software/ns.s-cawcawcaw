@@ -48,6 +48,7 @@ export function enqueue(
   const safeDraft: PostDraft = {
     headline: draft.headline ?? '',
     body: draft.body ?? '',
+    summary: draft.summary ?? '',
     tags: Array.isArray(draft.tags) ? draft.tags : [],
     projectName: draft.projectName ?? project,
     philosophyPoint: draft.philosophyPoint ?? '',

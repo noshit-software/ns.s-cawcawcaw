@@ -23,6 +23,10 @@ const TOOLS = [
           type: 'string',
           description: 'Full narrative body. No character limits. No code. No implementation details. First person, present tense.',
         },
+        summary: {
+          type: 'string',
+          description: 'Short-form version of this post for character-limited platforms (Bluesky, Twitter). Max 280 characters. Same voice, same story — just compressed. Should work as a standalone post, not a teaser. No hashtags in the summary.',
+        },
         tags: {
           type: 'array',
           items: { type: 'string' },
@@ -37,7 +41,7 @@ const TOOLS = [
           description: 'Optional. If the commit buffer contained work on OTHER threads not covered by this post, summarize those threads here. These notes will be waiting for you on the next push so you can pick up where you left off. Leave empty if the buffer was fully consumed by this story.',
         },
       },
-      required: ['headline', 'body', 'tags', 'philosophyPoint'],
+      required: ['headline', 'body', 'summary', 'tags', 'philosophyPoint'],
     },
   },
   {
@@ -131,7 +135,7 @@ Is the story ready?`,
     const input = toolUse.input as Omit<PostDraft, 'projectName'> & { carry_forward_notes?: string };
     return {
       action: 'publish',
-      draft: { headline: input.headline, body: input.body, tags: input.tags, philosophyPoint: input.philosophyPoint, projectName },
+      draft: { headline: input.headline, body: input.body, summary: input.summary ?? '', tags: input.tags, philosophyPoint: input.philosophyPoint, projectName },
       carryForwardNotes: input.carry_forward_notes ?? '',
     };
   }

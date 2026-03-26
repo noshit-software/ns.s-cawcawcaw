@@ -1,6 +1,6 @@
 import { type PublisherAdapter } from './types.js';
 import { LinkedInAdapter } from './linkedin/adapter.js';
-// import { BlueskyAdapter } from './bluesky/adapter.js';
+import { BlueskyAdapter } from './bluesky/adapter.js';
 // import { TwitterAdapter } from './twitter/adapter.js';
 // import { DiscordAdapter } from './discord/adapter.js';
 // import { MastodonAdapter } from './mastodon/adapter.js';
@@ -17,7 +17,7 @@ import { YouTubeAdapter } from './youtube/adapter.js';
 
 const ALL_ADAPTERS: PublisherAdapter[] = [
   new LinkedInAdapter(),
-  // new BlueskyAdapter(),
+  new BlueskyAdapter(),
   // new TwitterAdapter(),
   // new DiscordAdapter(),
   // new MastodonAdapter(),

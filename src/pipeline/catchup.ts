@@ -23,10 +23,11 @@ const QUEUE_POST_TOOL = {
     properties: {
       headline: { type: 'string', description: 'One sentence lede' },
       body: { type: 'string', description: 'Full narrative body. No code. No implementation details. Philosophy over mechanics.' },
+      summary: { type: 'string', description: 'Short-form version for character-limited platforms (Bluesky, Twitter). Max 280 characters. Same voice, same story — just compressed. Should work as a standalone post, not a teaser. No hashtags.' },
       tags: { type: 'array', items: { type: 'string' }, description: '3-5 thematic tags, no # prefix' },
       philosophyPoint: { type: 'string', description: 'Which philosophy point or narrative beat this advances' },
     },
-    required: ['headline', 'body', 'tags', 'philosophyPoint'],
+    required: ['headline', 'body', 'summary', 'tags', 'philosophyPoint'],
   },
 };
 
@@ -125,7 +126,7 @@ Quality over quantity. If the history only has one real story, queue one post. I
 
       if (toolUse.name === 'queue_post') {
         const input = toolUse.input as Omit<PostDraft, 'projectName'>;
-        drafts.push({ ...input, projectName });
+        drafts.push({ ...input, summary: input.summary ?? '', projectName });
         toolResults.push({ type: 'tool_result', tool_use_id: toolUse.id, content: 'Queued.' });
       }
 
