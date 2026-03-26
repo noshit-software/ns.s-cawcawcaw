@@ -1,7 +1,6 @@
 export interface PostDraft {
   headline: string;        // 1-sentence lede
   body: string;            // full narrative body, no character limit applied
-  summary: string;         // short-form version for character-limited platforms (≤280 chars)
   tags: string[];          // thematic tags, no # prefix
   projectName: string;
   philosophyPoint: string; // which philosophy point this post advances

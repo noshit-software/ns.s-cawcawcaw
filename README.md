@@ -162,12 +162,6 @@ It tracks what it's already published so it doesn't repeat itself. Philosophy, v
 
 The rate limit is global — one post per day across all projects, oldest approved first. It persists to disk and survives restarts.
 
-### Short-form and long-form
-
-Every post generates two versions: a full **body** for long-form platforms (LinkedIn, Dev.to, Medium) and a **summary** for character-limited platforms (Bluesky, Twitter). Same voice, same story — the summary is a standalone post, not a teaser.
-
-Both are visible in the queue. Edit either one independently before approving. Short-form adapters automatically use the summary; long-form adapters use the body.
-
 ---
 
 ## Other platforms
@@ -182,7 +176,7 @@ LinkedIn is fully implemented with OAuth. Other platforms are at various stages:
 | Hashnode | ready | API key auth |
 | Medium | ready | Integration token |
 | Threads | ready | Meta OAuth |
-| Bluesky | **ready** | Handle + app password, uses summary for short-form |
+| Bluesky | **ready** | Handle + app password, auto-threads long posts |
 | Discord | stub | Webhook URL |
 | Hacker News | stub | |
 | Instagram | stub | |
