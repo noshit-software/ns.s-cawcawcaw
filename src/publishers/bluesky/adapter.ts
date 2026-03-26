@@ -1,6 +1,7 @@
 import { BskyAgent, RichText } from '@atproto/api';
 import { type PublisherAdapter, type PostDraft, type PublishResult, type PlatformConstraints } from '../types.js';
 import { getCredential } from '../../store/credentials.js';
+import { splitThread } from '../thread.js';
 
 export class BlueskyAdapter implements PublisherAdapter {
   readonly platform = 'bluesky';
@@ -45,7 +46,6 @@ export class BlueskyAdapter implements PublisherAdapter {
         createdAt: new Date().toISOString(),
       };
 
-      // Thread replies reference both root and parent
       if (rootUri && parentUri) {
         record.reply = {
           root: { uri: rootUri, cid: rootCid },
@@ -69,46 +69,4 @@ export class BlueskyAdapter implements PublisherAdapter {
 
     return { platform: this.platform, success: true, url: firstUrl };
   }
-}
-
-/** Split text into thread chunks at sentence or word boundaries. */
-function splitThread(text: string, maxChars: number): string[] {
-  if (text.length <= maxChars) return [text];
-
-  const chunks: string[] = [];
-  let remaining = text;
-
-  while (remaining.length > 0) {
-    if (remaining.length <= maxChars) {
-      chunks.push(remaining.trim());
-      break;
-    }
-
-    // Find best split point: last sentence-ending punctuation within limit
-    let splitAt = -1;
-    const searchZone = remaining.slice(0, maxChars);
-
-    // Try splitting at sentence boundaries (. ! ? followed by space or newline)
-    for (let j = searchZone.length - 1; j >= maxChars * 0.4; j--) {
-      if ('.!?\n'.includes(searchZone[j]) && (j + 1 >= searchZone.length || ' \n\t'.includes(searchZone[j + 1]))) {
-        splitAt = j + 1;
-        break;
-      }
-    }
-
-    // Fall back to last space
-    if (splitAt === -1) {
-      splitAt = searchZone.lastIndexOf(' ');
-    }
-
-    // Last resort: hard cut
-    if (splitAt <= 0) {
-      splitAt = maxChars;
-    }
-
-    chunks.push(remaining.slice(0, splitAt).trim());
-    remaining = remaining.slice(splitAt).trim();
-  }
-
-  return chunks;
 }

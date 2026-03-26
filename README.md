@@ -186,7 +186,7 @@ LinkedIn is fully implemented with OAuth. Other platforms are at various stages:
 | Discord | stub | Webhook URL |
 | Hacker News | stub | |
 | Instagram | stub | |
-| Mastodon | **ready** | Instance URL + access token, 500 char limit |
+| Mastodon | **ready** | Instance URL + access token, auto-threads long posts |
 | Reddit | stub | |
 | TikTok | stub | |
 | X/Twitter | stub | |
