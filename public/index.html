@@ -502,6 +502,8 @@ async function loadQueue() {
       const esc = s => (s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
       const tags = Array.isArray(post.draft.tags) ? post.draft.tags : [];
       const tagline = projectConfigs[post.project]?.tagline || '';
+      const voice = projectConfigs[post.project]?.voice || 'default';
+      const detailLevel = projectConfigs[post.project]?.detailLevel || 'high-level';
       return `
         <div class="queue-entry ${isExpanded ? 'expanded' : ''}" id="qe-${post.id}" onclick="toggleQueue('${post.id}')">
           <div class="qe-header">
@@ -520,6 +522,7 @@ async function loadQueue() {
             <span>${date} ${time}</span>
             <span>${post.source.toUpperCase()}</span>
             <span>${platforms}</span>
+            ${(post.publishedTo && post.publishedTo.length > 0) ? `<span style="color:var(--accent)">SENT: ${post.publishedTo.map(p=>p.toUpperCase()).join(', ')}</span>` : ''}
           </div>
           ${isExpanded && isEditing ? `
           <div class="qe-body" style="display:block" onclick="event.stopPropagation()">
@@ -544,13 +547,16 @@ async function loadQueue() {
 
 TAGS: ${tags.map(t=>'#'+t).join(' ')}
 PHILOSOPHY: ${esc(post.draft.philosophyPoint)}
+<span style="color:var(--dim);font-size:.8rem">VOICE: ${esc(voice)} | DETAIL: ${esc(detailLevel)}</span>
           </div>` : ''}
           ${isExpanded && authed ? `
           <div class="qe-actions" onclick="event.stopPropagation()">
             ${isEditing ? `<button class="btn btn-primary" onclick="saveEdit('${post.id}')">SAVE</button>` : ''}
             ${editable ? `<button class="btn" onclick="${isEditing ? `cancelEdit('${post.id}')` : `startEdit('${post.id}')`}">${isEditing ? 'CANCEL EDIT' : 'EDIT'}</button>` : ''}
+            ${!isEditing && editable ? `<button class="btn" onclick="regeneratePost('${post.id}')">REGENERATE</button>` : ''}
             ${!isEditing && post.status === 'pending_review' ? `<button class="btn btn-approve" onclick="queueAction('${post.id}','approve')">APPROVE</button>` : ''}
-            ${!isEditing && post.status === 'approved' ? `<button class="btn btn-primary" onclick="publishPost('${post.id}')">PUBLISH NOW</button>` : ''}
+            ${!isEditing && post.status === 'approved' ? buildPublishDropdown(post) : ''}
+            ${!isEditing && post.status === 'published' ? buildRepublishDropdown(post) : ''}
             ${!isEditing && post.status === 'pending_review' ? `<button class="btn btn-reject" onclick="queueAction('${post.id}','reject')">REJECT</button>` : ''}
             ${!isEditing && post.status === 'approved' ? `<button class="btn" onclick="queueAction('${post.id}','reject')">RESCIND</button>` : ''}
             ${!isEditing && (post.status === 'published' || post.status === 'rejected') ? `<button class="btn" onclick="queueAction('${post.id}','requeue')">RE-QUEUE</button>` : ''}
@@ -618,13 +624,57 @@ async function queueAction(id, action) {
   } catch(e) { console.error(e); }
 }
 
-async function publishPost(id) {
-  if (!confirm('Publish this post now?')) return;
+function buildPublishDropdown(post) {
+  const published = post.publishedTo || [];
+  const options = configuredPlatformNames.map(p => {
+    const done = published.includes(p);
+    return `<option value="${p}" ${done ? 'disabled' : ''}>${p.toUpperCase()}${done ? ' ✓' : ''}</option>`;
+  }).join('');
+  return `<select class="finput" style="width:auto;min-width:10em;display:inline-block" onchange="publishPost('${post.id}', this.value); this.selectedIndex=0">
+    <option value="">PUBLISH TO ▸</option>
+    <option value="__all__">ALL PLATFORMS</option>
+    ${options}
+  </select>`;
+}
+
+function buildRepublishDropdown(post) {
+  const published = post.publishedTo || [];
+  const unpublished = configuredPlatformNames.filter(p => !published.includes(p));
+  if (unpublished.length === 0 && published.length === 0) return '';
+  const pubList = published.map(p => `<option disabled>${p.toUpperCase()} ✓</option>`).join('');
+  const unpubList = unpublished.map(p => `<option value="${p}">${p.toUpperCase()}</option>`).join('');
+  if (unpublished.length === 0) return `<span style="color:var(--dim);font-size:.8rem">PUBLISHED: ${published.map(p=>p.toUpperCase()).join(', ')}</span>`;
+  return `<select class="finput" style="width:auto;min-width:10em;display:inline-block" onchange="publishPost('${post.id}', this.value); this.selectedIndex=0">
+    <option value="">REPUBLISH TO ▸</option>
+    ${unpubList}
+    ${pubList}
+  </select>`;
+}
+
+async function publishPost(id, platform) {
+  if (!platform) return;
+  const label = platform === '__all__' ? 'ALL platforms' : platform.toUpperCase();
+  if (!confirm('Publish this post to ' + label + ' now?')) return;
   try {
-    const res = await fetch('/api/queue/' + id + '/publish', {method:'POST'});
+    const body = platform === '__all__' ? {} : { platforms: [platform] };
+    const res = await fetch('/api/queue/' + id + '/publish', {
+      method:'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(body)
+    });
     if (!res.ok) { const d = await res.json(); alert('Publish failed: ' + d.error); return; }
     await loadQueue();
   } catch(e) { console.error(e); }
+}
+
+async function regeneratePost(id) {
+  if (!confirm('Regenerate this post with current project voice/detail settings?')) return;
+  showBusy('Regenerating...');
+  try {
+    const res = await fetch('/api/queue/' + id + '/regenerate', {method:'POST'});
+    if (!res.ok) { const d = await res.json(); alert('Regenerate failed: ' + d.error); return; }
+    await loadQueue();
+  } catch(e) { console.error(e); } finally { hideBusy(); }
 }
 
 // ── PROJECTS ──────────────────────────────────────────────────
@@ -868,6 +918,22 @@ async function resetCatchup(name) {
 }
 
 let catchupRunning = null; // project name currently catching up
+
+function showBusy(msg) {
+  let banner = document.getElementById('busy-banner');
+  if (!banner) {
+    banner = document.createElement('div');
+    banner.id = 'busy-banner';
+    banner.style.cssText = 'position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.85);color:var(--bright);z-index:10000;font-size:1.3em;letter-spacing:.1em;cursor:not-allowed';
+    document.body.appendChild(banner);
+  }
+  banner.textContent = `▸ ${msg.toUpperCase()}`;
+  banner.style.display = 'flex';
+}
+function hideBusy() {
+  const banner = document.getElementById('busy-banner');
+  if (banner) banner.style.display = 'none';
+}
 
 function setCatchupBusy(name) {
   catchupRunning = name;

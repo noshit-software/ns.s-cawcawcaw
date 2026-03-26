@@ -146,7 +146,13 @@ All posts go through the queue. Nothing publishes without passing through here.
 | `published` | Done |
 | `rejected` | Killed — can be re-queued |
 
-Click a post to expand it. **EDIT** to rewrite before approving. **APPROVE** to mark ready. **RESCIND** to pull back an approved post. **PUBLISH NOW** bypasses the scheduler and rate limit — use deliberately.
+Click a post to expand it. **EDIT** to rewrite before approving. **APPROVE** to mark ready. **RESCIND** to pull back an approved post.
+
+**REGENERATE** re-runs Claude on the existing post using the project's current voice and detail level settings. Use this when you change a project's LOD or voice and want to rewrite queued posts to match.
+
+**PUBLISH TO** — a dropdown that replaces the old PUBLISH NOW button. Pick a specific platform or ALL PLATFORMS. Already-published platforms are marked with ✓. Published posts show a REPUBLISH TO dropdown for sending to platforms that were added after the original publish.
+
+The queue tracks which platforms each post has been published to — visible in the post metadata as `SENT: LINKEDIN, BLUESKY`, etc.
 
 **Gotcha:** DELETE removes the post permanently. RESCIND just moves it to rejected. RE-QUEUE puts rejected posts back to pending.
 

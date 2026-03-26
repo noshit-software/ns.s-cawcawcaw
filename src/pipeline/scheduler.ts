@@ -1,4 +1,4 @@
-import { getApproved, updateStatus, type QueuedPost } from '../store/queue.js';
+import { getApproved, updateStatus, addPublishedPlatforms, type QueuedPost } from '../store/queue.js';
 import { getProjectConfig, parseSchedule, shouldPublishNow } from '../store/project-config.js';
 import { getEnabledAdapters } from '../publishers/registry.js';
 import { type PublishResult } from '../publishers/types.js';
@@ -23,18 +23,28 @@ function setLastPublishedGlobal(ts: string): void {
 
 const INTERVAL_MS = 60_000; // check every minute
 
-async function publishPost(post: QueuedPost): Promise<void> {
+async function publishPost(post: QueuedPost, platformOverride?: string[]): Promise<void> {
   const config = getProjectConfig(post.project);
+  const alreadyPublished = post.publishedTo ?? [];
 
-  // Determine which adapters to use — project targets filtered by what's configured
+  // Determine which adapters to use
   const allAdapters = getEnabledAdapters();
-  const adapters = post.platforms.length > 0
-    ? allAdapters.filter(a => post.platforms.includes(a.platform))
-    : allAdapters;
+  let adapters;
+
+  if (platformOverride && platformOverride.length > 0) {
+    // Explicit platform selection (from per-platform publish)
+    adapters = allAdapters.filter(a => platformOverride.includes(a.platform));
+  } else if (post.platforms.length > 0) {
+    // Project-configured platforms, minus already published
+    adapters = allAdapters.filter(a => post.platforms.includes(a.platform) && !alreadyPublished.includes(a.platform));
+  } else {
+    // All configured platforms, minus already published
+    adapters = allAdapters.filter(a => !alreadyPublished.includes(a.platform));
+  }
 
   if (adapters.length === 0) {
     console.warn(`[scheduler] No adapters available for ${post.project}`);
-    updateStatus(post.id, 'published'); // mark done so it doesn't loop
+    updateStatus(post.id, 'published');
     return;
   }
 
@@ -54,6 +64,12 @@ async function publishPost(post: QueuedPost): Promise<void> {
       error: r.reason instanceof Error ? r.reason.message : String(r.reason),
     };
   });
+
+  // Track which platforms succeeded
+  const succeeded = publishResults.filter(r => r.success).map(r => r.platform);
+  if (succeeded.length > 0) {
+    addPublishedPlatforms(post.id, succeeded);
+  }
 
   for (const r of publishResults) {
     if (r.success) console.log(`[scheduler] Published ${post.project} → ${r.platform}: ${r.url}`);
@@ -92,8 +108,6 @@ async function tick(): Promise<void> {
 
   if (candidates.length === 0) return;
 
-  // Round-robin by project — pick the project that published least recently
-  // For now, just take the oldest approved post overall
   const next = candidates.sort((a, b) => a.createdAt.localeCompare(b.createdAt))[0];
 
   try {
@@ -103,11 +117,11 @@ async function tick(): Promise<void> {
   }
 }
 
-export function publishNow(postId: string): Promise<void> {
+export function publishNow(postId: string, platforms?: string[]): Promise<void> {
   const approved = getApproved();
   const post = approved.find(p => p.id === postId);
   if (!post) throw new Error('Post not found or not approved');
-  return publishPost(post);
+  return publishPost(post, platforms);
 }
 
 export function startScheduler(): void {

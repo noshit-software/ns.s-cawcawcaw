@@ -139,3 +139,63 @@ Is the story ready?`,
   const input = toolUse.input as { notes: string };
   return { action: 'wait', notes: input.notes };
 }
+
+export async function regenerate(
+  existingDraft: PostDraft,
+  philosophy: ProjectPhilosophy,
+  voice?: string,
+  detailLevel?: string
+): Promise<PostDraft> {
+  const client = getClient();
+
+  const suppressionNote =
+    philosophy.doNotPublishPatterns.length > 0
+      ? `\nDo NOT mention or allude to any of the following: ${philosophy.doNotPublishPatterns.join(', ')}.`
+      : '';
+
+  const response = await client.messages.create({
+    model: MODEL,
+    max_tokens: 1024,
+    tools: [{
+      name: 'rewrite_post',
+      description: 'The rewritten post.',
+      input_schema: {
+        type: 'object' as const,
+        properties: {
+          headline: { type: 'string', description: 'One sentence lede' },
+          body: { type: 'string', description: 'Full narrative body. No code. No implementation details. First person, present tense.' },
+          tags: { type: 'array', items: { type: 'string' }, description: '3-5 thematic tags, no # prefix' },
+          philosophyPoint: { type: 'string', description: 'Which philosophy point this post advances' },
+        },
+        required: ['headline', 'body', 'tags', 'philosophyPoint'],
+      },
+    }],
+    tool_choice: { type: 'tool' as const, name: 'rewrite_post' },
+    system: `You are rewriting an existing post for the project "${existingDraft.projectName}".
+
+Project philosophy:
+${philosophy.statement}
+
+${philosophy.narrativeArc ? `Narrative arc:\n${philosophy.narrativeArc}` : ''}
+
+Rewrite rules:
+- Keep the same story and philosophy point — just rewrite the voice and detail level
+- No code snippets, no function names, no file paths
+- Detail level: ${detailLevel || 'high-level'} — ${detailLevel === 'technical' ? 'you may reference architecture and design decisions' : detailLevel === 'moderate' ? 'mention what was built but not how' : 'the story is the why, not the what. No implementation details.'}
+- Voice: ${voice || 'First person singular ("I", never "we"). Present tense. Confident but not arrogant.'}
+- No corporate speak
+- No bullet points in the body
+- Vary your opening — never start with "I built" or "I created"${suppressionNote}`,
+
+    messages: [{
+      role: 'user',
+      content: `Here is the existing post to rewrite:\n\nHEADLINE: ${existingDraft.headline}\n\nBODY:\n${existingDraft.body}\n\nPHILOSOPHY POINT: ${existingDraft.philosophyPoint}\n\nTAGS: ${existingDraft.tags.join(', ')}\n\nRewrite this post with the voice and detail level specified above.`,
+    }],
+  });
+
+  const toolUse = response.content.find(b => b.type === 'tool_use');
+  if (!toolUse || toolUse.type !== 'tool_use') throw new Error('No rewrite returned');
+
+  const result = toolUse.input as Omit<PostDraft, 'projectName'>;
+  return { ...result, projectName: existingDraft.projectName };
+}

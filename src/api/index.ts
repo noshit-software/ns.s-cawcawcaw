@@ -3,7 +3,7 @@ import { PLATFORM_MANIFEST } from '../publishers/manifest.js';
 import { getCredential, setCredentials, clearCredentials } from '../store/credentials.js';
 import { getActivity } from '../activity/log.js';
 import { getAllAccounts, addAccount, removeAccount, getAccountsByType } from '../store/accounts.js';
-import { getQueue, updateStatus, updateDraft, removeFromQueue } from '../store/queue.js';
+import { getQueue, updateStatus, updateDraft, removeFromQueue, type QueuedPost } from '../store/queue.js';
 import { getProjectConfig, setProjectConfig, getAllProjectConfigs, deleteProject, renameProject } from '../store/project-config.js';
 import { fetchPhilosophy } from '../philosophy/client.js';
 import { getPostHistory } from '../store/post-history.js';
@@ -11,6 +11,7 @@ import { runCatchup, fetchGitHubCommits, getNewCommitCount } from '../pipeline/c
 import { enqueue } from '../store/queue.js';
 import { updateNotes } from '../store/commit-buffer.js';
 import { publishNow } from '../pipeline/scheduler.js';
+import { regenerate } from '../pipeline/writer.js';
 import { isAuthenticated, requireAuth } from '../auth/session.js';
 
 const router = Router();
@@ -108,7 +109,8 @@ router.post('/queue/:id/approve', requireAuth, (req, res) => {
 
 router.post('/queue/:id/publish', requireAuth, async (req, res) => {
   try {
-    await publishNow(req.params.id);
+    const { platforms } = (req.body ?? {}) as { platforms?: string[] };
+    await publishNow(req.params.id, platforms);
     res.json({ ok: true });
   } catch (e) {
     res.status(400).json({ error: e instanceof Error ? e.message : String(e) });
@@ -151,6 +153,22 @@ router.post('/queue/batch', requireAuth, (req, res) => {
 router.delete('/queue/:id', requireAuth, (req, res) => {
   removeFromQueue(req.params.id);
   res.json({ ok: true });
+});
+
+router.post('/queue/:id/regenerate', requireAuth, async (req, res) => {
+  const posts = getQueue();
+  const post = posts.find(p => p.id === req.params.id);
+  if (!post) { res.status(404).json({ error: 'Post not found' }); return; }
+
+  try {
+    const config = getProjectConfig(post.project);
+    const philosophy = await fetchPhilosophy(post.project);
+    const newDraft = await regenerate(post.draft, philosophy, config.voice, config.detailLevel);
+    updateDraft(post.id, newDraft);
+    res.json({ ok: true, draft: newDraft });
+  } catch (e) {
+    res.status(500).json({ error: e instanceof Error ? e.message : String(e) });
+  }
 });
 
 // ── PROJECTS ─────────────────────────────────────────────────

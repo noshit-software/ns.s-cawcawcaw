@@ -14,6 +14,7 @@ export interface QueuedPost {
   status: QueueStatus;
   source: QueueSource;
   platforms: string[];   // which platforms to target
+  publishedTo: string[]; // which platforms have already published this post
   createdAt: string;
   updatedAt: string;
 }
@@ -59,6 +60,7 @@ export function enqueue(
     status: reviewRequired ? 'pending_review' : 'approved',
     source,
     platforms,
+    publishedTo: [],
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
@@ -90,6 +92,16 @@ export function updateDraft(postId: string, draft: Partial<PostDraft>): void {
   const post = store.find(p => p.id === postId);
   if (!post) return;
   post.draft = { ...post.draft, ...draft };
+  post.updatedAt = new Date().toISOString();
+  save(store);
+}
+
+export function addPublishedPlatforms(postId: string, platforms: string[]): void {
+  const store = load();
+  const post = store.find(p => p.id === postId);
+  if (!post) return;
+  const existing = post.publishedTo ?? [];
+  post.publishedTo = [...new Set([...existing, ...platforms])];
   post.updatedAt = new Date().toISOString();
   save(store);
 }
