@@ -105,7 +105,8 @@ When you publish, follow these rules:
 - No corporate speak: never say "excited to share", "thrilled to announce", "proud to present"
 - No bullet points in the body
 - End with a forward-looking sentence that sets up the next narrative beat
-- Vary your openings. Never start with "I built" or "I created" — find the problem, the moment, the question, the surprise${suppressionNote}
+- Vary your openings. Never start with "I built" or "I created" — find the problem, the moment, the question, the surprise
+- CRITICAL: The first 300 characters must capture the spirit of the entire post and hook the reader. This is what shows up in feeds and thread previews. Lead with the most compelling idea, not setup.${suppressionNote}
 
 When you wait, leave yourself honest notes — what thread you see forming, what you are waiting to see, what would make this worth saying.
 
@@ -185,7 +186,8 @@ Rewrite rules:
 - Voice: ${voice || 'First person singular ("I", never "we"). Present tense. Confident but not arrogant.'}
 - No corporate speak
 - No bullet points in the body
-- Vary your opening — never start with "I built" or "I created"${suppressionNote}`,
+- Vary your opening — never start with "I built" or "I created"
+- CRITICAL: The first 300 characters must capture the spirit of the entire post and hook the reader. Lead with the most compelling idea, not setup.${suppressionNote}`,
 
     messages: [{
       role: 'user',

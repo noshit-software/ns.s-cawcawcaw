@@ -164,7 +164,7 @@ Inline action buttons (✓ ✗ ×) appear on each row without expanding. Bulk ac
 
 Claude doesn't post on every push. It accumulates commits and decides when there's a story. When it waits, it leaves itself notes about the thread it's tracking. When it publishes, it carries forward notes about other threads still forming.
 
-It tracks what it's already published so it doesn't repeat itself. Philosophy, voice, and detail level shape every draft per project. Post openings are varied — the prompt enforces no repetitive "I built" patterns across consecutive posts.
+It tracks what it's already published so it doesn't repeat itself. Philosophy, voice, and detail level shape every draft per project. Post openings are varied — the prompt enforces no repetitive "I built" patterns across consecutive posts. The first 300 characters of every post are written to hook the reader and capture the spirit of the full post — this is what shows in feeds and thread previews on short-form platforms.
 
 The rate limit is global — one post per day across all projects, oldest approved first. It persists to disk and survives restarts.
 
