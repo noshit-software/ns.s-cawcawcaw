@@ -211,6 +211,10 @@
     <button class="tab" data-tab="system" onclick="switchTab('system')"><span class="k">[5]</span>SYSTEM</button>
   </div>
 
+  <div id="demo-banner" style="display:none;background:var(--dim);color:var(--bg);padding:.3rem .8rem;margin-bottom:.75rem;letter-spacing:.1em;font-size:.85em;text-align:center">
+    ▌ DEMO MODE — READ-ONLY VIEW ▐ <span style="opacity:.7">Log in to manage projects and publish posts</span>
+  </div>
+
   <!-- [1] PLATFORMS -->
   <div class="panel active" id="panel-platforms">
     <div class="slabel" id="plat-summary">LOADING...</div>
@@ -1085,6 +1089,9 @@ function updateTabVisibility() {
   if (platTab) platTab.style.display = (authed || !authRequired) ? '' : 'none';
   // If on platforms tab and not authed, switch to queue
   if (!authed && authRequired && currentTab === 'platforms') switchTab('queue');
+  // Demo banner
+  const banner = document.getElementById('demo-banner');
+  if (banner) banner.style.display = (authRequired && !authed) ? '' : 'none';
 }
 
 async function doLogin() {

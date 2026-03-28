@@ -241,6 +241,7 @@ When enabled:
 - **Private projects** — invisible without login. API returns 404.
 - **All write operations** — require login. Approve, reject, delete, edit, save, catchup, platform management — all locked.
 - **Platforms tab** — hidden entirely without login.
+- **Demo banner** — visible to unauthenticated visitors, indicates read-only mode.
 - Session is cookie-based, expires after 7 days. Login prompt is in the header.
 
 Runtime data in `data/` — back it up. Specifically:

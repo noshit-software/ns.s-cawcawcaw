@@ -165,7 +165,7 @@ export async function fetchGitHubCommits(repo: string, sinceSha?: string): Promi
     const url = new URL(`https://api.github.com/repos/${repo}/commits`);
     url.searchParams.set('per_page', String(perPage));
     url.searchParams.set('page', String(page));
-    if (sinceSha) url.searchParams.set('since', ''); // we'll filter by sha below
+    // No date filter — we filter by SHA match below
 
     const headers: Record<string, string> = { Accept: 'application/vnd.github+json' };
     const ghToken = process.env.GITHUB_TOKEN;
