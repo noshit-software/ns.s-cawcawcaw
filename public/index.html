@@ -777,6 +777,7 @@ function renderProjects() {
             <button class="btn btn-primary" id="ps-save-${name}" onclick="saveProject('${name}')" ${projectSavedState[name] === false ? '' : 'disabled'}>SAVE</button>
             <button class="btn" onclick="runCatchup('${name}')" ${!cfg.githubRepo ? 'disabled title="Set GitHub repo first"' : cfg.newCommits === 0 && cfg.lastCatchupCommit ? 'disabled' : ''}>${cfg.newCommits > 0 ? 'CATCHUP (' + cfg.newCommits + ' NEW)' : 'CATCHUP'}</button>
             ${cfg.lastCatchupCommit ? `<button class="btn" onclick="resetCatchup('${name}')" title="Clear catchup history and regenerate all posts">RESET CATCHUP</button>` : ''}
+            <button class="btn" onclick="composeIntro('${name}')" title="Generate an introductory post from the project philosophy">COMPOSE INTRO</button>
             ${projectSavedState[name] === true ? '<span class="status-msg ok" id="ps-saved-' + name + '" style="margin-left:.5rem">SAVED</span>' : ''}
           </div>
           <div class="status-msg" id="ps-status-${name}"></div>
@@ -962,6 +963,19 @@ function clearCatchupBusy() {
   if (banner) banner.style.display = 'none';
   // Re-enable buttons by reloading projects
   loadProjects();
+}
+
+async function composeIntro(name) {
+  showBusy('Composing intro for ' + name + '...');
+  try {
+    const res = await fetch('/api/queue/compose', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ project: name })
+    });
+    if (!res.ok) { const d = await res.json(); alert('Compose failed: ' + d.error); return; }
+    await loadQueue();
+    switchTab(2); // switch to queue tab
+  } catch(e) { console.error(e); } finally { hideBusy(); }
 }
 
 async function runCatchup(name) {

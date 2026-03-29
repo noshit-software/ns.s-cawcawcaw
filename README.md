@@ -133,6 +133,8 @@ For repos with existing history — run catchup to generate a backlog of drafts 
 
 **RESET CATCHUP** clears the commit history marker so the next catchup regenerates all posts from scratch. Use this if you deleted posts from the queue and want to regenerate them.
 
+**COMPOSE INTRO** generates an introductory post from the project philosophy alone — no commits needed. Use this for the first post when you want an origin story, not a commit summary.
+
 ---
 
 ## The queue

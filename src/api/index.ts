@@ -155,6 +155,23 @@ router.delete('/queue/:id', requireAuth, (req, res) => {
   res.json({ ok: true });
 });
 
+router.post('/queue/compose', requireAuth, async (req, res) => {
+  const { project } = req.body as { project: string };
+  if (!project) { res.status(400).json({ error: 'project required' }); return; }
+
+  try {
+    const config = getProjectConfig(project);
+    const philosophy = await fetchPhilosophy(project);
+    const postHistory = getPostHistory(project);
+    const { generateIntro } = await import('../pipeline/writer.js');
+    const draft = await generateIntro(philosophy, project, postHistory, config.voice, config.detailLevel);
+    enqueue(project, draft, 'catchup', config.platforms, config.reviewRequired);
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ error: e instanceof Error ? e.message : String(e) });
+  }
+});
+
 router.post('/queue/:id/regenerate', requireAuth, async (req, res) => {
   const posts = getQueue();
   const post = posts.find(p => p.id === req.params.id);

@@ -201,3 +201,72 @@ Rewrite rules:
   const result = toolUse.input as Omit<PostDraft, 'projectName'>;
   return { ...result, projectName: existingDraft.projectName };
 }
+
+export async function generateIntro(
+  philosophy: ProjectPhilosophy,
+  projectName: string,
+  postHistory: PostRecord[],
+  voice?: string,
+  detailLevel?: string
+): Promise<PostDraft> {
+  const client = getClient();
+
+  const suppressionNote =
+    philosophy.doNotPublishPatterns.length > 0
+      ? `\nDo NOT mention or allude to any of the following: ${philosophy.doNotPublishPatterns.join(', ')}.`
+      : '';
+
+  const historyBlock = postHistory.length > 0
+    ? `Already published (do not repeat):\n${postHistory.map(p =>
+        `- "${p.headline}" — ${p.philosophyPoint}`
+      ).join('\n')}\n\n`
+    : '';
+
+  const response = await client.messages.create({
+    model: MODEL,
+    max_tokens: 1024,
+    tools: [{
+      name: 'intro_post',
+      description: 'The introductory post for this project.',
+      input_schema: {
+        type: 'object' as const,
+        properties: {
+          headline: { type: 'string', description: 'One sentence lede' },
+          body: { type: 'string', description: 'Full narrative body. This is the FIRST post about this project — introduce what it is and why it exists.' },
+          tags: { type: 'array', items: { type: 'string' }, description: '3-5 thematic tags, no # prefix' },
+          philosophyPoint: { type: 'string', description: 'Which philosophy point this post advances' },
+        },
+        required: ['headline', 'body', 'tags', 'philosophyPoint'],
+      },
+    }],
+    tool_choice: { type: 'tool' as const, name: 'intro_post' },
+    system: `You are writing the FIRST public post for the project "${projectName}". This is an introduction — the audience has never heard of this project.
+
+Project philosophy:
+${philosophy.statement}
+
+${philosophy.narrativeArc ? `Narrative arc:\n${philosophy.narrativeArc}` : ''}
+
+${historyBlock}Rules:
+- This is an origin story. Why does this project exist? What problem did you see? What did you do about it?
+- No code snippets, no function names, no file paths
+- Detail level: ${detailLevel || 'high-level'} — ${detailLevel === 'technical' ? 'you may reference architecture and design decisions' : detailLevel === 'moderate' ? 'mention what was built but not how' : 'the story is the why, not the what. No implementation details.'}
+- Voice: ${voice || 'First person singular ("I", never "we"). Present tense. Confident but not arrogant.'}
+- No corporate speak: never say "excited to share", "thrilled to announce", "proud to present"
+- No bullet points in the body
+- CRITICAL: The first 300 characters must capture the spirit of the entire post and hook the reader
+- End with a forward-looking sentence that invites curiosity
+- Do NOT start with "I built" or "I created" — find the problem first${suppressionNote}`,
+
+    messages: [{
+      role: 'user',
+      content: 'Write the introductory post for this project.',
+    }],
+  });
+
+  const toolUse = response.content.find(b => b.type === 'tool_use');
+  if (!toolUse || toolUse.type !== 'tool_use') throw new Error('No intro post returned');
+
+  const result = toolUse.input as Omit<PostDraft, 'projectName'>;
+  return { ...result, projectName };
+}
