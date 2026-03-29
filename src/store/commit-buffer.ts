@@ -47,3 +47,11 @@ export function clearBuffer(project: string): void {
   delete store[project];
   save(store);
 }
+
+export function renameProjectInBuffer(oldName: string, newName: string): void {
+  const store = load();
+  if (!store[oldName]) return;
+  store[newName] = store[oldName];
+  delete store[oldName];
+  save(store);
+}

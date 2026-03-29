@@ -106,6 +106,17 @@ export function addPublishedPlatforms(postId: string, platforms: string[]): void
   save(store);
 }
 
+export function renameProjectInQueue(oldName: string, newName: string): void {
+  const store = load();
+  for (const post of store) {
+    if (post.project === oldName) {
+      post.project = newName;
+      if (post.draft.projectName === oldName) post.draft.projectName = newName;
+    }
+  }
+  save(store);
+}
+
 export function removeFromQueue(postId: string): void {
   save(load().filter(p => p.id !== postId));
 }

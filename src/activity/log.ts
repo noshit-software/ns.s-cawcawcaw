@@ -37,3 +37,11 @@ export function logActivity(entry: Omit<ActivityEntry, 'id' | 'timestamp'>): voi
 export function getActivity(limit = 50): ActivityEntry[] {
   return load().slice(0, Math.min(limit, MAX_ENTRIES));
 }
+
+export function renameProjectInActivity(oldName: string, newName: string): void {
+  const entries = load();
+  for (const e of entries) {
+    if (e.project === oldName) e.project = newName;
+  }
+  save(entries);
+}

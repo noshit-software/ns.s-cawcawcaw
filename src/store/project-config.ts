@@ -1,5 +1,9 @@
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { PATHS } from './paths.js';
+import { renameProjectInQueue } from './queue.js';
+import { renameProjectInHistory } from './post-history.js';
+import { renameProjectInBuffer } from './commit-buffer.js';
+import { renameProjectInActivity } from '../activity/log.js';
 
 const CONFIG_PATH = PATHS.projects;
 
@@ -70,6 +74,11 @@ export function renameProject(oldName: string, newName: string): void {
   store[newName] = store[oldName];
   delete store[oldName];
   save(store);
+  // Update all stores that reference project by name
+  renameProjectInQueue(oldName, newName);
+  renameProjectInHistory(oldName, newName);
+  renameProjectInBuffer(oldName, newName);
+  renameProjectInActivity(oldName, newName);
 }
 
 export function getAllProjectConfigs(): Record<string, ProjectConfig> {

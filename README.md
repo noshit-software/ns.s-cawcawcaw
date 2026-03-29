@@ -114,7 +114,7 @@ The OAuth flow handles everything — access token, refresh token, author URN. A
 | **Tagline** | Appended to every post at publish time. |
 | **Visibility** | `private` (default) or `public`. Public projects and their queue items are visible to unauthenticated visitors. Private projects are completely hidden without login. |
 
-Hit **SAVE**. Projects can be renamed or deleted from the expanded view.
+Hit **SAVE**. Projects can be renamed or deleted from the expanded view. Renaming updates all references across queue, post history, commit buffer, and activity log.
 
 ---
 
