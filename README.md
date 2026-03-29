@@ -182,11 +182,11 @@ LinkedIn is fully implemented with OAuth. Other platforms are at various stages:
 | Hashnode | ready | API key auth |
 | Medium | ready | Integration token |
 | Threads | ready | Meta OAuth |
-| Bluesky | **ready** | Handle + app password, auto-threads long posts |
+| Bluesky | **ready** | Handle + app password, auto-threads long posts, hashtags on every chunk |
 | Discord | stub | Webhook URL |
 | Hacker News | stub | |
 | Instagram | stub | |
-| Mastodon | **ready** | Instance URL + access token, auto-threads long posts |
+| Mastodon | **ready** | Instance URL + access token, auto-threads long posts, hashtags on every chunk |
 | Reddit | stub | |
 | TikTok | stub | |
 | X/Twitter | stub | |

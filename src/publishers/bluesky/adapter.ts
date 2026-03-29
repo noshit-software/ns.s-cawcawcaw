@@ -25,11 +25,23 @@ export class BlueskyAdapter implements PublisherAdapter {
     const agent = new BskyAgent({ service: 'https://bsky.social' });
     await agent.login({ identifier: handle, password: appPassword });
 
+    const hashtagLine = draft.tags.slice(0, 5).map(t => `#${t.replace(/\s+/g, '')}`).join(' ');
+
     const fullText = draft.headline
       ? `${draft.headline}\n\n${draft.body}`
       : draft.body;
 
-    const chunks = splitThread(fullText, 300);
+    // Reserve space for hashtags in each chunk
+    const reserveLen = hashtagLine.length + 2; // +2 for \n\n
+    const chunkLimit = 300 - reserveLen;
+    const chunks = splitThread(fullText, chunkLimit > 100 ? chunkLimit : 300);
+
+    // Append hashtags to every chunk
+    for (let i = 0; i < chunks.length; i++) {
+      if (chunks[i].length + 2 + hashtagLine.length <= 300) {
+        chunks[i] = chunks[i] + '\n\n' + hashtagLine;
+      }
+    }
     let rootUri: string | undefined;
     let rootCid: string | undefined;
     let parentUri: string | undefined;

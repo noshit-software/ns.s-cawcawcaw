@@ -23,15 +23,18 @@ export class MastodonAdapter implements PublisherAdapter {
 
     let fullText = draft.headline ? `${draft.headline}\n\n${draft.body}` : draft.body;
 
-    // Try to fit hashtags in the last chunk
     const hashtagLine = draft.tags.slice(0, 5).map(t => `#${t.replace(/\s+/g, '')}`).join(' ');
 
-    const chunks = splitThread(fullText, 500);
+    // Reserve space for hashtags in each chunk
+    const reserveLen = hashtagLine.length + 2; // +2 for \n\n
+    const chunkLimit = 500 - reserveLen;
+    const chunks = splitThread(fullText, chunkLimit > 200 ? chunkLimit : 500);
 
-    // Append hashtags to last chunk if they fit
-    const lastIdx = chunks.length - 1;
-    if (chunks[lastIdx].length + 2 + hashtagLine.length <= 500) {
-      chunks[lastIdx] = chunks[lastIdx] + '\n\n' + hashtagLine;
+    // Append hashtags to every chunk
+    for (let i = 0; i < chunks.length; i++) {
+      if (chunks[i].length + 2 + hashtagLine.length <= 500) {
+        chunks[i] = chunks[i] + '\n\n' + hashtagLine;
+      }
     }
 
     let firstUrl = '';
