@@ -1,4 +1,4 @@
-import { getApproved, updateStatus, addPublishedPlatforms, type QueuedPost } from '../store/queue.js';
+import { getApproved, getQueue, updateStatus, addPublishedPlatforms, type QueuedPost } from '../store/queue.js';
 import { getProjectConfig, parseSchedule, shouldPublishNow } from '../store/project-config.js';
 import { getEnabledAdapters } from '../publishers/registry.js';
 import { type PublishResult } from '../publishers/types.js';
@@ -118,9 +118,9 @@ async function tick(): Promise<void> {
 }
 
 export function publishNow(postId: string, platforms?: string[]): Promise<void> {
-  const approved = getApproved();
-  const post = approved.find(p => p.id === postId);
-  if (!post) throw new Error('Post not found or not approved');
+  const allPosts = getQueue();
+  const post = allPosts.find(p => p.id === postId && (p.status === 'approved' || p.status === 'published'));
+  if (!post) throw new Error('Post not found or not approved/published');
   return publishPost(post, platforms);
 }
 

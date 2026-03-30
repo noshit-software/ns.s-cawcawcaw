@@ -152,7 +152,7 @@ Click a post to expand it. **EDIT** to rewrite before approving. **APPROVE** to 
 
 **REGENERATE** re-runs Claude on the existing post using the project's current voice and detail level settings. Use this when you change a project's LOD or voice and want to rewrite queued posts to match.
 
-**PUBLISH TO** — a dropdown that replaces the old PUBLISH NOW button. Pick a specific platform or ALL PLATFORMS. Already-published platforms are marked with ✓. Published posts show a REPUBLISH TO dropdown for sending to platforms that were added after the original publish.
+**PUBLISH TO** — a dropdown that replaces the old PUBLISH NOW button. Pick a specific platform or ALL PLATFORMS. Already-published platforms are marked with ✓. Published posts show a REPUBLISH TO dropdown for sending to platforms that were added after the original publish. Republishing works on already-published posts — no need to re-queue.
 
 The queue tracks which platforms each post has been published to — visible in the post metadata as `SENT: LINKEDIN, BLUESKY`, etc.
 
