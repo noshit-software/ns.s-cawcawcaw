@@ -469,8 +469,8 @@ async function loadQueue() {
     const projectConfigs = await pRes.json();
     if (status) posts = posts.filter(p => p.status === status);
 
-    // Populate project filter
-    const allProjects = [...new Set(posts.map(p => p.project))];
+    // Populate project filter from projects list, not filtered queue
+    const allProjects = Object.keys(projectConfigs);
     const filterEl = document.getElementById('queue-filter');
     const currentFilter = filterEl.value;
     filterEl.innerHTML = '<option value="">ALL PROJECTS</option>' +

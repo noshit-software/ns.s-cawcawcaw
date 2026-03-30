@@ -156,7 +156,7 @@ Click a post to expand it. **EDIT** to rewrite before approving. **APPROVE** to 
 
 The projects endpoint returns instantly — no GitHub API calls on page load. Commit checks only happen during catchup when posts are being generated.
 
-**▼ ALL / ▲ ALL** buttons on both Queue and Projects tabs expand or collapse all entries at once.
+**▼ ALL / ▲ ALL** buttons on both Queue and Projects tabs expand or collapse all entries at once. The project dropdown in the queue tab always shows all projects, not just those with visible posts.
 
 The queue tracks which platforms each post has been published to — visible in the post metadata as `SENT: LINKEDIN, BLUESKY`, etc.
 
