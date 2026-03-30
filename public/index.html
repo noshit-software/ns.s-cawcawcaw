@@ -246,6 +246,8 @@
           <option value="published">PUBLISHED</option>
           <option value="rejected">REJECTED</option>
         </select>
+        <button class="btn" onclick="expandAllQueue()" style="font-size:.75em;padding:.2em .6em">▼ ALL</button>
+        <button class="btn" onclick="collapseAllQueue()" style="font-size:.75em;padding:.2em .6em">▲ ALL</button>
       </div>
     </div>
     <div id="queue-list"><div class="empty">QUEUE IS EMPTY.</div></div>
@@ -258,6 +260,8 @@
       <div id="project-add-controls" style="display:flex;gap:.8rem;align-items:center">
         <input id="new-project-name" class="finput" style="width:16em" placeholder="project-name" spellcheck="false" autocomplete="off" />
         <button class="btn btn-primary" onclick="addProject()" style="white-space:nowrap">+ ADD</button>
+        <button class="btn" onclick="expandAllProjects()" style="font-size:.75em;padding:.2em .6em">▼ ALL</button>
+        <button class="btn" onclick="collapseAllProjects()" style="font-size:.75em;padding:.2em .6em">▲ ALL</button>
       </div>
     </div>
     <div id="project-list"><div class="empty">NO PROJECTS CONFIGURED.</div></div>
@@ -591,6 +595,14 @@ function toggleQueue(id) {
   saveState();
   loadQueue();
 }
+function expandAllQueue() {
+  document.querySelectorAll('.queue-entry').forEach(el => expandedQueue.add(el.id.replace('qe-','')));
+  saveState(); loadQueue();
+}
+function collapseAllQueue() {
+  expandedQueue.clear(); editingQueue.clear();
+  saveState(); loadQueue();
+}
 
 function startEdit(id) {
   editingQueue.add(id);
@@ -873,6 +885,14 @@ function toggleProject(name) {
   else expandedProjects.add(name);
   saveState();
   renderProjects();
+}
+function expandAllProjects() {
+  Object.keys(projects).forEach(n => expandedProjects.add(n));
+  saveState(); renderProjects();
+}
+function collapseAllProjects() {
+  expandedProjects.clear();
+  saveState(); renderProjects();
 }
 
 async function addProject() {
