@@ -7,7 +7,7 @@ import { getQueue, updateStatus, updateDraft, removeFromQueue, type QueuedPost }
 import { getProjectConfig, setProjectConfig, getAllProjectConfigs, deleteProject, renameProject } from '../store/project-config.js';
 import { fetchPhilosophy } from '../philosophy/client.js';
 import { getPostHistory } from '../store/post-history.js';
-import { runCatchup, fetchGitHubCommits, getNewCommitCount } from '../pipeline/catchup.js';
+import { runCatchup, fetchGitHubCommits } from '../pipeline/catchup.js';
 import { enqueue } from '../store/queue.js';
 import { updateNotes } from '../store/commit-buffer.js';
 import { publishNow } from '../pipeline/scheduler.js';
@@ -190,22 +190,17 @@ router.post('/queue/:id/regenerate', requireAuth, async (req, res) => {
 
 // ── PROJECTS ─────────────────────────────────────────────────
 
-router.get('/projects', async (req, res) => {
+router.get('/projects', (req, res) => {
   const configs = getAllProjectConfigs();
   const authed = isAuthenticated(req);
   const enriched: Record<string, unknown> = {};
   for (const [name, cfg] of Object.entries(configs)) {
     if (!authed && cfg.visibility !== 'public') continue;
-    let newCommits = 0;
-    if (authed && cfg.githubRepo && cfg.lastCatchupCommit) {
-      try { newCommits = await getNewCommitCount(cfg.githubRepo, cfg.lastCatchupCommit); } catch {}
-    }
-    const project = authed ? { ...cfg, newCommits } : {
+    enriched[name] = authed ? cfg : {
       schedule: cfg.schedule, philosophy: cfg.philosophy, tagline: cfg.tagline,
       voice: cfg.voice, detailLevel: cfg.detailLevel, visibility: cfg.visibility,
       platforms: cfg.platforms, reviewRequired: cfg.reviewRequired,
     };
-    enriched[name] = project;
   }
   res.json(enriched);
 });

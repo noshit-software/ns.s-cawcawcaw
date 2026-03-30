@@ -154,6 +154,8 @@ Click a post to expand it. **EDIT** to rewrite before approving. **APPROVE** to 
 
 **PUBLISH TO** — a dropdown that replaces the old PUBLISH NOW button. Pick a specific platform or ALL PLATFORMS. Already-published platforms are marked with ✓. Published posts show a REPUBLISH TO dropdown for sending to platforms that were added after the original publish. Republishing works on already-published posts — no need to re-queue.
 
+The projects endpoint returns instantly — no GitHub API calls on page load. Commit checks only happen during catchup when posts are being generated.
+
 The queue tracks which platforms each post has been published to — visible in the post metadata as `SENT: LINKEDIN, BLUESKY`, etc.
 
 **Gotcha:** DELETE removes the post permanently. RESCIND just moves it to rejected. RE-QUEUE puts rejected posts back to pending.
