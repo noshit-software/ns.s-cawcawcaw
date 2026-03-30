@@ -104,7 +104,7 @@ The OAuth flow handles everything — access token, refresh token, author URN. A
 
 | Field | What it does |
 |-------|-------------|
-| **Schedule** | When the publish window opens. `05:00` (default), `09:00 weekdays`, `09:00 weekends`, or `immediate`. |
+| **Schedule** | When the publish window opens. `05:00` (default), `09:00 weekdays`, `09:00 weekends`, or `immediate`. Times are in your configured timezone (`TIMEZONE` env var, defaults to `America/Los_Angeles`). |
 | **Review required** | ON by default. Posts sit at `pending_review` until you approve them. Turn OFF and posts auto-approve — the scheduler publishes at the next window. |
 | **Platforms** | Which platforms to post to. Empty = all configured platforms. |
 | **GitHub repo** | `owner/repo` format. Used for catchup via GitHub API. Hit **TEST** to verify. |

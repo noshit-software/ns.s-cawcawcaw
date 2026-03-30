@@ -86,14 +86,13 @@ async function tick(): Promise<void> {
   const approved = getApproved();
   if (approved.length === 0) return;
 
-  // Global rate limit — one post per day across all projects
+  // Global rate limit — one post per day across all projects (in configured timezone)
   const lastPublished = getLastPublishedGlobal();
   if (lastPublished) {
-    const last = new Date(lastPublished);
-    const now = new Date();
-    if (last.getFullYear() === now.getFullYear() &&
-        last.getMonth() === now.getMonth() &&
-        last.getDate() === now.getDate()) return;
+    const tz = process.env.TIMEZONE || 'America/Los_Angeles';
+    const lastDate = new Date(lastPublished).toLocaleDateString('en-US', { timeZone: tz });
+    const nowDate = new Date().toLocaleDateString('en-US', { timeZone: tz });
+    if (lastDate === nowDate) return;
   }
 
   // Find the oldest approved post across all projects, respecting each project's schedule

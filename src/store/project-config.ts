@@ -117,27 +117,32 @@ export function parseSchedule(schedule: string): ScheduleSpec {
   };
 }
 
+/** Get date parts in the given timezone */
+function tzParts(date: Date, tz?: string): { year: number; month: number; day: number; hour: number; weekday: number } {
+  tz = tz ?? (process.env.TIMEZONE || 'America/Los_Angeles');
+  const year = parseInt(date.toLocaleString('en-US', { timeZone: tz, year: 'numeric' }), 10);
+  const month = parseInt(date.toLocaleString('en-US', { timeZone: tz, month: 'numeric' }), 10);
+  const day = parseInt(date.toLocaleString('en-US', { timeZone: tz, day: 'numeric' }), 10);
+  const hour = parseInt(date.toLocaleString('en-US', { timeZone: tz, hour: 'numeric', hour12: false }), 10);
+  const weekday = new Date(date.toLocaleString('en-US', { timeZone: tz })).getDay();
+  return { year, month, day, hour, weekday };
+}
+
 export function shouldPublishNow(spec: ScheduleSpec, lastPublishedAt?: string): boolean {
   if (spec.type === 'immediate') return true;
 
-  const now = new Date();
-  const day = now.getDay(); // 0=Sun 6=Sat
-  const isWeekday = day >= 1 && day <= 5;
-  const isWeekend = day === 0 || day === 6;
+  const now = tzParts(new Date());
+  const isWeekday = now.weekday >= 1 && now.weekday <= 5;
+  const isWeekend = now.weekday === 0 || now.weekday === 6;
 
   if (spec.days === 'weekdays' && !isWeekday) return false;
   if (spec.days === 'weekends' && !isWeekend) return false;
-  if (now.getHours() !== spec.hour) return false;
+  if (now.hour !== spec.hour) return false;
 
   // Only publish once per hour window
   if (lastPublishedAt) {
-    const last = new Date(lastPublishedAt);
-    if (
-      last.getFullYear() === now.getFullYear() &&
-      last.getMonth() === now.getMonth() &&
-      last.getDate() === now.getDate() &&
-      last.getHours() === now.getHours()
-    ) return false;
+    const last = tzParts(new Date(lastPublishedAt));
+    if (last.year === now.year && last.month === now.month && last.day === now.day && last.hour === now.hour) return false;
   }
 
   return true;
