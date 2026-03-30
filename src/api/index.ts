@@ -3,7 +3,7 @@ import { PLATFORM_MANIFEST } from '../publishers/manifest.js';
 import { getCredential, setCredentials, clearCredentials } from '../store/credentials.js';
 import { getActivity } from '../activity/log.js';
 import { getAllAccounts, addAccount, removeAccount, getAccountsByType } from '../store/accounts.js';
-import { getQueue, updateStatus, updateDraft, removeFromQueue, type QueuedPost } from '../store/queue.js';
+import { getQueue, updateStatus, updateDraft, removeFromQueue, addPublishedPlatforms, type QueuedPost } from '../store/queue.js';
 import { getProjectConfig, setProjectConfig, getAllProjectConfigs, deleteProject, renameProject } from '../store/project-config.js';
 import { fetchPhilosophy } from '../philosophy/client.js';
 import { getPostHistory } from '../store/post-history.js';
@@ -128,6 +128,10 @@ router.post('/queue/:id/requeue', requireAuth, (req, res) => {
 });
 
 router.post('/queue/:id/mark-published', requireAuth, (req, res) => {
+  const { platforms } = (req.body ?? {}) as { platforms?: string[] };
+  if (platforms && platforms.length > 0) {
+    addPublishedPlatforms(req.params.id, platforms);
+  }
   updateStatus(req.params.id, 'published');
   res.json({ ok: true });
 });
