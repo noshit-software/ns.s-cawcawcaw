@@ -46,16 +46,17 @@ export function enqueue(
   reviewRequired: boolean
 ): QueuedPost {
   const store = load();
+  const normalized = project.toUpperCase();
   const safeDraft: PostDraft = {
     headline: draft.headline ?? '',
     body: draft.body ?? '',
     tags: Array.isArray(draft.tags) ? draft.tags : [],
-    projectName: draft.projectName ?? project,
+    projectName: normalized,
     philosophyPoint: draft.philosophyPoint ?? '',
   };
   const post: QueuedPost = {
     id: id(),
-    project,
+    project: normalized,
     draft: safeDraft,
     status: reviewRequired ? 'pending_review' : 'approved',
     source,
@@ -108,10 +109,12 @@ export function addPublishedPlatforms(postId: string, platforms: string[]): void
 
 export function renameProjectInQueue(oldName: string, newName: string): void {
   const store = load();
+  const oldKey = oldName.toUpperCase();
+  const newKey = newName.toUpperCase();
   for (const post of store) {
-    if (post.project === oldName) {
-      post.project = newName;
-      if (post.draft.projectName === oldName) post.draft.projectName = newName;
+    if (post.project.toUpperCase() === oldKey) {
+      post.project = newKey;
+      post.draft.projectName = newKey;
     }
   }
   save(store);

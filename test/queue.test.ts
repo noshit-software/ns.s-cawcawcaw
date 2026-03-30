@@ -123,7 +123,7 @@ describe('queue store', () => {
         philosophyPoint: 'point',
       } as any;
       const post = mod.enqueue('my-project', draft, 'live', [], true);
-      assert.strictEqual(post.draft.projectName, 'my-project');
+      assert.strictEqual(post.draft.projectName, 'MY-PROJECT');
     });
   });
 

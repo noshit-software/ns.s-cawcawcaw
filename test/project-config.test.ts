@@ -70,9 +70,9 @@ describe('project-config store', () => {
 
     it('should merge stored values with defaults', () => {
       writeFileSync(CONFIG_PATH, JSON.stringify({
-        'test-proj': { schedule: '09:00', reviewRequired: false }
+        'TEST-PROJ': { schedule: '09:00', reviewRequired: false }
       }), 'utf-8');
-      const config = mod.getProjectConfig('test-proj');
+      const config = mod.getProjectConfig('TEST-PROJ');
       assert.strictEqual(config.schedule, '09:00');
       assert.strictEqual(config.reviewRequired, false);
       // Defaults should fill in the rest
@@ -85,25 +85,25 @@ describe('project-config store', () => {
     it('should filter out undefined values and not override existing fields', () => {
       // Set initial config
       writeFileSync(CONFIG_PATH, JSON.stringify({
-        'test-proj': { ...mod.DEFAULT_CONFIG, schedule: '09:00', tagline: 'CAW.' }
+        'TEST-PROJ': { ...mod.DEFAULT_CONFIG, schedule: '09:00', tagline: 'CAW.' }
       }), 'utf-8');
 
       // Call setProjectConfig with some undefined values
-      mod.setProjectConfig('test-proj', {
+      mod.setProjectConfig('TEST-PROJ', {
         schedule: '12:00',
         tagline: undefined,  // should NOT override existing 'CAW.'
         philosophy: undefined,
       });
 
-      const config = mod.getProjectConfig('test-proj');
+      const config = mod.getProjectConfig('TEST-PROJ');
       assert.strictEqual(config.schedule, '12:00', 'schedule should be updated');
       assert.strictEqual(config.tagline, 'CAW.', 'tagline should NOT be overridden by undefined');
     });
 
     it('should merge with defaults for a new project', () => {
       writeFileSync(CONFIG_PATH, '{}', 'utf-8');
-      mod.setProjectConfig('brand-new', { schedule: 'immediate' });
-      const config = mod.getProjectConfig('brand-new');
+      mod.setProjectConfig('BRAND-NEW', { schedule: 'immediate' });
+      const config = mod.getProjectConfig('BRAND-NEW');
       assert.strictEqual(config.schedule, 'immediate');
       assert.strictEqual(config.reviewRequired, true, 'should inherit default reviewRequired');
       assert.strictEqual(config.voice, mod.DEFAULT_CONFIG.voice);
@@ -114,14 +114,14 @@ describe('project-config store', () => {
     it('should merge defaults into all stored configs so new fields are always present', () => {
       // Simulate a store written before voice/detailLevel existed
       writeFileSync(CONFIG_PATH, JSON.stringify({
-        'old-proj': { schedule: '05:00', reviewRequired: false, platforms: [], githubRepo: '', philosophy: '', tagline: '', lastCatchupCommit: '' }
+        'OLD-PROJ': { schedule: '05:00', reviewRequired: false, platforms: [], githubRepo: '', philosophy: '', tagline: '', lastCatchupCommit: '' }
       }), 'utf-8');
 
       const all = mod.getAllProjectConfigs();
-      assert.ok(all['old-proj'], 'old-proj should exist');
-      assert.strictEqual(all['old-proj'].voice, mod.DEFAULT_CONFIG.voice, 'voice should be merged from defaults');
-      assert.strictEqual(all['old-proj'].detailLevel, mod.DEFAULT_CONFIG.detailLevel, 'detailLevel should be merged from defaults');
-      assert.strictEqual(all['old-proj'].reviewRequired, false, 'stored reviewRequired should not be overridden');
+      assert.ok(all['OLD-PROJ'], 'old-proj should exist');
+      assert.strictEqual(all['OLD-PROJ'].voice, mod.DEFAULT_CONFIG.voice, 'voice should be merged from defaults');
+      assert.strictEqual(all['OLD-PROJ'].detailLevel, mod.DEFAULT_CONFIG.detailLevel, 'detailLevel should be merged from defaults');
+      assert.strictEqual(all['OLD-PROJ'].reviewRequired, false, 'stored reviewRequired should not be overridden');
     });
   });
 });

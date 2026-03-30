@@ -896,7 +896,7 @@ function collapseAllProjects() {
 }
 
 async function addProject() {
-  const name = document.getElementById('new-project-name').value.trim();
+  const name = document.getElementById('new-project-name').value.trim().toUpperCase();
   if (!name) return;
   await fetch('/api/projects/' + encodeURIComponent(name), {
     method: 'POST', headers: {'Content-Type':'application/json'},

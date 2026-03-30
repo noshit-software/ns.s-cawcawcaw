@@ -48,31 +48,38 @@ function save(store: Store): void {
   writeFileSync(CONFIG_PATH, JSON.stringify(store, null, 2), 'utf-8');
 }
 
+function normalize(name: string): string {
+  return name.toUpperCase();
+}
+
 export function getProjectConfig(project: string): ProjectConfig {
-  return { ...DEFAULT_CONFIG, ...(load()[project] ?? {}) };
+  return { ...DEFAULT_CONFIG, ...(load()[normalize(project)] ?? {}) };
 }
 
 export function setProjectConfig(project: string, config: Partial<ProjectConfig>): void {
   const store = load();
+  const key = normalize(project);
   // Filter out undefined values so they don't override existing/default fields
   const defined = Object.fromEntries(
     Object.entries(config).filter(([, v]) => v !== undefined)
   );
-  store[project] = { ...DEFAULT_CONFIG, ...(store[project] ?? {}), ...defined };
+  store[key] = { ...DEFAULT_CONFIG, ...(store[key] ?? {}), ...defined };
   save(store);
 }
 
 export function deleteProject(project: string): void {
   const store = load();
-  delete store[project];
+  delete store[normalize(project)];
   save(store);
 }
 
 export function renameProject(oldName: string, newName: string): void {
   const store = load();
-  if (!store[oldName]) return;
-  store[newName] = store[oldName];
-  delete store[oldName];
+  const oldKey = normalize(oldName);
+  const newKey = normalize(newName);
+  if (!store[oldKey]) return;
+  store[newKey] = store[oldKey];
+  delete store[oldKey];
   save(store);
   // Update all stores that reference project by name
   renameProjectInQueue(oldName, newName);
