@@ -160,6 +160,8 @@ The projects endpoint returns instantly — no GitHub API calls on page load. Co
 
 The queue tracks which platforms each post has been published to — visible in the post metadata as `SENT: LINKEDIN, BLUESKY`, etc.
 
+**MARK PUBLISHED** sets a post's status to published without actually sending it anywhere. Use this for posts you've already published manually or externally.
+
 **Gotcha:** DELETE removes the post permanently. RESCIND just moves it to rejected. RE-QUEUE puts rejected posts back to pending.
 
 Inline action buttons (✓ ✗ ×) appear on each row without expanding. Bulk actions at the top of the queue operate on all visible posts (filtered by project/status).

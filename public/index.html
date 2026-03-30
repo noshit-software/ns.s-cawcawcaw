@@ -566,6 +566,7 @@ PHILOSOPHY: ${esc(post.draft.philosophyPoint)}
             ${!isEditing && post.status === 'approved' ? buildPublishDropdown(post) : ''}
             ${!isEditing && post.status === 'published' ? buildRepublishDropdown(post) : ''}
             ${!isEditing && post.status === 'pending_review' ? `<button class="btn btn-reject" onclick="queueAction('${post.id}','reject')">REJECT</button>` : ''}
+            ${!isEditing && (post.status === 'approved' || post.status === 'pending_review') ? `<button class="btn" onclick="markPublished('${post.id}')">MARK PUBLISHED</button>` : ''}
             ${!isEditing && post.status === 'approved' ? `<button class="btn" onclick="queueAction('${post.id}','reject')">RESCIND</button>` : ''}
             ${!isEditing && (post.status === 'published' || post.status === 'rejected') ? `<button class="btn" onclick="queueAction('${post.id}','requeue')">RE-QUEUE</button>` : ''}
             ${!isEditing ? `<button class="btn btn-danger" onclick="queueAction('${post.id}','delete')">DELETE</button>` : ''}
@@ -679,6 +680,15 @@ async function publishPost(id, platform) {
       body: JSON.stringify(body)
     });
     if (!res.ok) { const d = await res.json(); alert('Publish failed: ' + d.error); return; }
+    await loadQueue();
+  } catch(e) { console.error(e); }
+}
+
+async function markPublished(id) {
+  if (!confirm('Mark this post as published? (No actual publishing will occur)')) return;
+  try {
+    const res = await fetch('/api/queue/' + id + '/mark-published', {method:'POST'});
+    if (!res.ok) { const d = await res.json(); alert('Failed: ' + d.error); return; }
     await loadQueue();
   } catch(e) { console.error(e); }
 }

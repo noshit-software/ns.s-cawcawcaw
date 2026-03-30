@@ -127,6 +127,11 @@ router.post('/queue/:id/requeue', requireAuth, (req, res) => {
   res.json({ ok: true });
 });
 
+router.post('/queue/:id/mark-published', requireAuth, (req, res) => {
+  updateStatus(req.params.id, 'published');
+  res.json({ ok: true });
+});
+
 router.patch('/queue/:id', requireAuth, (req, res) => {
   const { headline, body, tags, philosophyPoint } = req.body as Record<string, unknown>;
   const draft: Record<string, unknown> = {};
