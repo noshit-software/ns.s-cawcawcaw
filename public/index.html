@@ -470,7 +470,7 @@ async function loadQueue() {
     if (status) posts = posts.filter(p => p.status === status);
 
     // Populate project filter from projects list, not filtered queue
-    const allProjects = Object.keys(projectConfigs);
+    const allProjects = Object.keys(projectConfigs).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
     const filterEl = document.getElementById('queue-filter');
     const currentFilter = filterEl.value;
     filterEl.innerHTML = '<option value="">ALL PROJECTS</option>' +
@@ -705,7 +705,7 @@ async function loadProjects() {
 function renderProjects() {
   const addControls = document.getElementById('project-add-controls');
   if (addControls) addControls.style.display = authed ? '' : 'none';
-  const names = Object.keys(projects);
+  const names = Object.keys(projects).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
   if (!names.length) { document.getElementById('project-list').innerHTML = '<div class="empty">NO PROJECTS CONFIGURED.</div>'; return; }
 
   const escAttr = s => (s ?? '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
