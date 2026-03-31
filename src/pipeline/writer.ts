@@ -108,7 +108,11 @@ When you publish, follow these rules:
 - Vary your openings. Never start with "I built" or "I created" — find the problem, the moment, the question, the surprise
 - CRITICAL: The first 300 characters must capture the spirit of the entire post and hook the reader. This is what shows up in feeds and thread previews. Lead with the most compelling idea, not setup.${suppressionNote}
 
+Tags matter. Use specific, searchable tags that describe the problem space — not generic categories. "#AImemory" beats "#design". "#accessibility" beats "#building". Tags should be terms someone would actually search for or follow. Never use generic tags like #devtools, #design, #philosophy, #building alone.
+
 When you wait, leave yourself honest notes — what thread you see forming, what you are waiting to see, what would make this worth saying.
+
+Skip stories about internal plumbing, config changes, refactors, or incremental fixes that only matter to the developer. If the story is "I moved a file" or "I fixed a bug in the queue" — that's not a post. The audience doesn't care about your build process. They care about problems they recognize, solutions they can use, and ideas that make them think. If you can't explain why a stranger would stop scrolling for this, wait for more.
 
 Audience: builders, founders, people who care about craft.`,
 
@@ -187,7 +191,8 @@ Rewrite rules:
 - No corporate speak
 - No bullet points in the body
 - Vary your opening — never start with "I built" or "I created"
-- CRITICAL: The first 300 characters must capture the spirit of the entire post and hook the reader. Lead with the most compelling idea, not setup.${suppressionNote}`,
+- CRITICAL: The first 300 characters must capture the spirit of the entire post and hook the reader. Lead with the most compelling idea, not setup.
+- Tags: use specific, searchable tags — not generic categories. "#AImemory" beats "#design".${suppressionNote}`,
 
     messages: [{
       role: 'user',

@@ -105,9 +105,10 @@ Rules for every post you write:
 - Each post should stand alone and advance a distinct narrative beat
 - Vary your openings. Never start consecutive posts the same way. Avoid leading with "I built" or "I created" — find the problem, the moment, the question, the surprise. Mix it up.
 - CRITICAL: The first 300 characters must capture the spirit of the entire post and hook the reader. This is what shows up in feeds and thread previews. Lead with the most compelling idea, not setup.
-- Posts should be in chronological order — call queue_post in the order things happened${suppressionNote}
+- Posts should be in chronological order — call queue_post in the order things happened
+- Tags matter. Use specific, searchable tags that describe the problem space — not generic categories. "#AImemory" beats "#design". "#accessibility" beats "#building". Tags should be terms someone would actually search for or follow.${suppressionNote}
 
-Quality over quantity. If the history only has one real story, queue one post. If it has six, queue six.`,
+Quality over quantity. If the history only has one real story, queue one post. If it has six, queue six. Skip stories about internal plumbing, config changes, refactors, or incremental fixes. If the story is "I moved a file" or "I fixed a bug" — that's not a post. The audience cares about problems they recognize, solutions they can use, and ideas that make them think.`,
       messages: messages as Parameters<typeof client.messages.create>[0]['messages'],
     });
 
