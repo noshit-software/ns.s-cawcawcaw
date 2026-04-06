@@ -30,11 +30,10 @@ export class MastodonAdapter implements PublisherAdapter {
     const chunkLimit = 500 - reserveLen;
     const chunks = splitThread(fullText, chunkLimit > 200 ? chunkLimit : 500);
 
-    // Append hashtags to every chunk
-    for (let i = 0; i < chunks.length; i++) {
-      if (chunks[i].length + 2 + hashtagLine.length <= 500) {
-        chunks[i] = chunks[i] + '\n\n' + hashtagLine;
-      }
+    // Append hashtags to last chunk only
+    const last = chunks.length - 1;
+    if (chunks[last].length + 2 + hashtagLine.length <= 500) {
+      chunks[last] = chunks[last] + '\n\n' + hashtagLine;
     }
 
     let firstUrl = '';

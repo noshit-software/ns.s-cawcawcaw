@@ -149,7 +149,6 @@ Quality over quantity. If the history only has one real story, queue one post. I
   return { drafts, notes };
 }
 
-// Read git history directly from a local repo path
 interface GitHubCommitResponse {
   sha: string;
   commit: { message: string; author: { name: string; date: string } };
@@ -202,44 +201,3 @@ export async function fetchGitHubCommits(repo: string, sinceSha?: string): Promi
   return { commits, latestSha };
 }
 
-// Count commits since a SHA via GitHub API
-export async function getNewCommitCount(repo: string, sinceSha: string): Promise<number> {
-  if (!sinceSha) return 0;
-  try {
-    const url = `https://api.github.com/repos/${repo}/compare/${sinceSha}...HEAD`;
-    const headers: Record<string, string> = { Accept: 'application/vnd.github+json' };
-    const ghToken = process.env.GITHUB_TOKEN;
-    if (ghToken) headers.Authorization = `Bearer ${ghToken}`;
-
-    const res = await fetch(url, { headers });
-    if (!res.ok) return 0;
-    const data = await res.json() as { ahead_by: number };
-    return data.ahead_by;
-  } catch {
-    return 0;
-  }
-}
-
-// Parse raw git log output into CatchupCommits
-// Accepts several formats:
-//   - "abc1234 commit message" (git log --oneline)
-//   - "commit message|author|2026-03-01" (custom format)
-//   - plain "commit message" (one per line)
-export function parseGitLog(raw: string): CatchupCommit[] {
-  return raw
-    .split('\n')
-    .map(line => line.trim())
-    .filter(line => line.length > 0 && !line.startsWith('#'))
-    .map(line => {
-      // Try pipe-delimited: message|author|date
-      if (line.includes('|')) {
-        const [message, author, date] = line.split('|').map(s => s.trim());
-        return { message, author, date };
-      }
-      // Try git log --oneline: strip leading short hash
-      const oneline = line.match(/^[0-9a-f]{4,12}\s+(.+)$/);
-      if (oneline) return { message: oneline[1] };
-      return { message: line };
-    })
-    .filter(c => c.message.length > 0);
-}

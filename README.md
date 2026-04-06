@@ -6,6 +6,11 @@ Project names are normalized to uppercase everywhere — `getAllProjectConfigs()
 
 Ghost removed as a publishing target.
 
+**Bugs fixed:**
+- Live webhook pipeline now looks up projects by `githubRepo` field instead of raw repo name — previously all live webhooks silently failed
+- Hashtags now appended to last thread chunk only (Bluesky, Mastodon)
+- Removed dead exports (`getNewCommitCount`, `parseGitLog`) from catchup pipeline
+
 No scheduling tools, no "content calendars," no copy-paste into LinkedIn. You commit. It crows.
 
 ---

@@ -36,11 +36,10 @@ export class BlueskyAdapter implements PublisherAdapter {
     const chunkLimit = 300 - reserveLen;
     const chunks = splitThread(fullText, chunkLimit > 100 ? chunkLimit : 300);
 
-    // Append hashtags to every chunk
-    for (let i = 0; i < chunks.length; i++) {
-      if (chunks[i].length + 2 + hashtagLine.length <= 300) {
-        chunks[i] = chunks[i] + '\n\n' + hashtagLine;
-      }
+    // Append hashtags to last chunk only
+    const last = chunks.length - 1;
+    if (chunks[last].length + 2 + hashtagLine.length <= 300) {
+      chunks[last] = chunks[last] + '\n\n' + hashtagLine;
     }
     let rootUri: string | undefined;
     let rootCid: string | undefined;

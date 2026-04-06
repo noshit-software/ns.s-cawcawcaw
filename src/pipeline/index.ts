@@ -5,7 +5,7 @@ import { logActivity } from '../activity/log.js';
 import { addCommits, getBuffer, updateNotes, clearBuffer } from '../store/commit-buffer.js';
 import { recordPost, getPostHistory } from '../store/post-history.js';
 import { enqueue } from '../store/queue.js';
-import { getProjectConfig } from '../store/project-config.js';
+import { getProjectConfig, getAllProjectConfigs } from '../store/project-config.js';
 
 export interface PipelineResult {
   published: boolean;
@@ -14,7 +14,16 @@ export interface PipelineResult {
 }
 
 export async function runPipeline(push: GitHubPush): Promise<PipelineResult> {
-  const projectName = push.repository.name;
+  // Find the project whose githubRepo matches this push — repo name alone won't match project keys
+  const pushRepo = push.repository.full_name;
+  const allConfigs = getAllProjectConfigs();
+  const projectEntry = Object.entries(allConfigs).find(([, cfg]) => cfg.githubRepo === pushRepo);
+  if (!projectEntry) {
+    console.log(`[cawcawcaw] No project configured for repo ${pushRepo} — skipping`);
+    return { published: false, queued: false, reason: `No project for ${pushRepo}` };
+  }
+  const projectName = projectEntry[0]; // already normalized uppercase key
+
   const newCommits = extractCommits(push);
 
   if (newCommits.length === 0) {
