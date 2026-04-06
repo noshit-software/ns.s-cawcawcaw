@@ -22,14 +22,6 @@ export const PLATFORM_MANIFEST: Record<string, PlatformDef> = {
       { key: 'author_urn', label: 'AUTHOR URN', secret: false, placeholder: 'urn:li:person:XXXXXXXXXX' },
     ],
   },
-  ghost: {
-    label: 'Ghost',
-    description: 'Self-hosted blog',
-    fields: [
-      { key: 'api_url', label: 'BLOG URL', secret: false, placeholder: 'https://blog.knightsrook.com' },
-      { key: 'admin_api_key', label: 'ADMIN API KEY', secret: true, placeholder: 'id:secret format from Ghost admin' },
-    ],
-  },
   bluesky: {
     label: 'Bluesky',
     description: 'AT Protocol social',
