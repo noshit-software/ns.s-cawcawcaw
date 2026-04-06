@@ -2,6 +2,8 @@
 
 You push code. Claude watches. When there's a story worth telling, it writes it and posts it.
 
+Project names are normalized to uppercase everywhere — `getAllProjectConfigs()` now merges any mixed-case duplicates on read.
+
 No scheduling tools, no "content calendars," no copy-paste into LinkedIn. You commit. It crows.
 
 ---

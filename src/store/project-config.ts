@@ -89,9 +89,11 @@ export function renameProject(oldName: string, newName: string): void {
 }
 
 export function getAllProjectConfigs(): Record<string, ProjectConfig> {
-  const store = load();
-  for (const name of Object.keys(store)) {
-    store[name] = { ...DEFAULT_CONFIG, ...store[name] };
+  const raw = load();
+  const store: Record<string, ProjectConfig> = {};
+  for (const name of Object.keys(raw)) {
+    const key = normalize(name);
+    store[key] = { ...DEFAULT_CONFIG, ...(store[key] ?? {}), ...raw[name] };
   }
   return store;
 }
