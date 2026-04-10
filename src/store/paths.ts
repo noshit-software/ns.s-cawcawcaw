@@ -15,4 +15,5 @@ export const PATHS = {
   history:       join(CAWCAWCAW_DIR, 'history.json'),
   queue:         join(CAWCAWCAW_DIR, 'queue.json'),
   projects:      join(CAWCAWCAW_DIR, 'projects.json'),
+  settings:      join(CAWCAWCAW_DIR, 'settings.json'),
 };

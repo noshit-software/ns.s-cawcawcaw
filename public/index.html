@@ -277,6 +277,8 @@
   <div class="panel" id="panel-system">
     <div class="slabel">SERVER STATUS</div>
     <div id="sys-info"><div class="empty">LOADING...</div></div>
+    <div class="slabel" style="margin-top:1.5rem">PUBLISH SETTINGS</div>
+    <div id="sys-settings"><div class="empty">LOADING...</div></div>
   </div>
 
 </div>
@@ -762,17 +764,6 @@ function renderProjects() {
             <input class="pe-input" id="ps-schedule-${name}" value="${escAttr(cfg.schedule)}" placeholder="immediate / 09:00 / 09:00 weekdays" autocomplete="off" spellcheck="false" ${!authed ? 'disabled' : ''}/>
           </div>
           <div class="pe-field">
-            <span class="pe-label">FREQUENCY</span>
-            <span class="farrow">▸</span>
-            <select class="pe-input" id="ps-frequency-${name}" ${!authed ? 'disabled' : ''}>
-              <option value="daily" ${(cfg.frequency||'daily') === 'daily' ? 'selected' : ''}>DAILY</option>
-              <option value="every2days" ${cfg.frequency === 'every2days' ? 'selected' : ''}>EVERY 2 DAYS</option>
-              <option value="every3days" ${cfg.frequency === 'every3days' ? 'selected' : ''}>EVERY 3 DAYS</option>
-              <option value="weekly" ${cfg.frequency === 'weekly' ? 'selected' : ''}>WEEKLY</option>
-              <option value="biweekly" ${cfg.frequency === 'biweekly' ? 'selected' : ''}>BIWEEKLY</option>
-            </select>
-          </div>
-          <div class="pe-field">
             <span class="pe-label">REVIEW REQUIRED</span>
             <span class="farrow">▸</span>
             <div class="pe-toggle">
@@ -955,7 +946,6 @@ async function addProject() {
 
 async function saveProject(name) {
   const schedule = document.getElementById('ps-schedule-' + name).value.trim();
-  const frequency = document.getElementById('ps-frequency-' + name).value;
   const reviewRequired = document.getElementById('ps-review-' + name).checked;
   const platformEl = document.getElementById('ps-platforms-' + name);
   const platforms = platformEl ? [...platformEl.querySelectorAll('input[type=checkbox]:checked')].map(c => c.value) : [];
@@ -969,7 +959,7 @@ async function saveProject(name) {
   try {
     const res = await fetch('/api/projects/' + encodeURIComponent(name), {
       method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ schedule, frequency, reviewRequired, platforms, githubRepo, philosophy, voice, detailLevel, tagline, visibility })
+      body: JSON.stringify({ schedule, reviewRequired, platforms, githubRepo, philosophy, voice, detailLevel, tagline, visibility })
     });
     if (!res.ok) throw new Error(await res.text());
     projectSavedState[name] = true;
@@ -1115,6 +1105,35 @@ async function loadSystem() {
       <div class="sys-row"><span class="skey">SCHEDULER</span><span class="sval ok">RUNNING (60S INTERVAL)</span></div>
       <div class="sys-row"><span class="skey">WEBHOOK ENDPOINT</span><span class="sval">/WEBHOOK/GITHUB</span></div>`;
   } catch { document.getElementById('sys-info').innerHTML = '<div class="empty">ERROR REACHING SERVER.</div>'; }
+
+  try {
+    const sres = await fetch('/api/settings');
+    if (!sres.ok) { document.getElementById('sys-settings').innerHTML = '<div class="empty">NOT AUTHENTICATED.</div>'; return; }
+    const s = await sres.json();
+    document.getElementById('sys-settings').innerHTML = `
+      <div class="sys-row" style="align-items:center;gap:1rem">
+        <span class="skey">POST FREQUENCY</span>
+        <select id="sys-freq" style="background:var(--bg);color:var(--bright);border:1px solid var(--dim);padding:.2rem .4rem;font-family:inherit;font-size:.9em">
+          <option value="1" ${s.postFrequencyDays===1?'selected':''}>DAILY</option>
+          <option value="2" ${s.postFrequencyDays===2?'selected':''}>EVERY 2 DAYS</option>
+          <option value="3" ${s.postFrequencyDays===3?'selected':''}>EVERY 3 DAYS</option>
+          <option value="7" ${s.postFrequencyDays===7?'selected':''}>WEEKLY</option>
+          <option value="14" ${s.postFrequencyDays===14?'selected':''}>BIWEEKLY</option>
+        </select>
+        <button class="btn btn-primary" onclick="saveFrequency()">SAVE</button>
+        <span id="sys-freq-status" class="status-msg"></span>
+      </div>`;
+  } catch { document.getElementById('sys-settings').innerHTML = '<div class="empty">ERROR LOADING SETTINGS.</div>'; }
+}
+
+async function saveFrequency() {
+  const val = parseInt(document.getElementById('sys-freq').value, 10);
+  try {
+    const res = await fetch('/api/settings', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ postFrequencyDays: val }) });
+    if (!res.ok) throw new Error(await res.text());
+    setMsg('sys-freq-status', 'SAVED', 'ok');
+    setTimeout(() => clearMsg('sys-freq-status'), 2000);
+  } catch(e) { setMsg('sys-freq-status', 'ERROR', 'err'); }
 }
 
 // ── UTILS ─────────────────────────────────────────────────────

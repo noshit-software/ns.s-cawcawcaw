@@ -4,22 +4,29 @@ import { getEnabledAdapters } from '../publishers/registry.js';
 import { type PublishResult } from '../publishers/types.js';
 import { recordPost, getPostHistory } from '../store/post-history.js';
 import { logActivity } from '../activity/log.js';
+import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { join } from 'node:path';
+import { CAWCAWCAW_DIR } from '../store/paths.js';
+import { getSettings } from '../store/settings.js';
 
-function frequencyToDays(frequency: string): number {
-  switch (frequency) {
-    case 'every2days': return 2;
-    case 'every3days': return 3;
-    case 'weekly': return 7;
-    case 'biweekly': return 14;
-    default: return 1; // daily
-  }
+// Global cap — one post per N days across all projects
+const LAST_PUBLISH_PATH = join(CAWCAWCAW_DIR, 'last-publish.txt');
+
+function getLastPublishedGlobal(): string | undefined {
+  try { return existsSync(LAST_PUBLISH_PATH) ? readFileSync(LAST_PUBLISH_PATH, 'utf-8').trim() || undefined : undefined; }
+  catch { return undefined; }
 }
 
-function projectReadyToPublish(project: string, frequency: string): boolean {
-  const history = getPostHistory(project, 1);
-  if (history.length === 0) return true;
-  const daysSince = (Date.now() - new Date(history[0].timestamp).getTime()) / 86_400_000;
-  return daysSince >= frequencyToDays(frequency);
+function setLastPublishedGlobal(ts: string): void {
+  try { writeFileSync(LAST_PUBLISH_PATH, ts, 'utf-8'); } catch {}
+}
+
+function globalCapReached(): boolean {
+  const last = getLastPublishedGlobal();
+  if (!last) return false;
+  const { postFrequencyDays } = getSettings();
+  const daysSince = (Date.now() - new Date(last).getTime()) / 86_400_000;
+  return daysSince < postFrequencyDays;
 }
 
 const INTERVAL_MS = 60_000; // check every minute
@@ -78,6 +85,7 @@ async function publishPost(post: QueuedPost, platformOverride?: string[]): Promi
   }
 
   updateStatus(post.id, 'published');
+  setLastPublishedGlobal(new Date().toISOString());
   recordPost(post.project, post.draft.headline, post.draft.philosophyPoint, post.draft.body);
   logActivity({ project: post.project, worthy: true, reason: post.draft.philosophyPoint, results: publishResults });
 }
@@ -86,12 +94,15 @@ async function tick(): Promise<void> {
   const approved = getApproved();
   if (approved.length === 0) return;
 
-  // Find candidates: each project's oldest approved post, if schedule + frequency allow
+  // Global cap: one post per day total across all projects
+  if (globalCapReached()) return;
+
+  // Find candidates: posts from projects whose schedule allows publishing now
   const candidates = [];
   for (const post of approved) {
     const config = getProjectConfig(post.project);
     const spec = parseSchedule(config.schedule);
-    if (shouldPublishNow(spec, undefined) && projectReadyToPublish(post.project, config.frequency)) {
+    if (shouldPublishNow(spec, undefined)) {
       candidates.push(post);
     }
   }

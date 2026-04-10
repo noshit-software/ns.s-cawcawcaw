@@ -9,7 +9,6 @@ const CONFIG_PATH = PATHS.projects;
 
 export interface ProjectConfig {
   schedule: string;       // 'immediate' | 'HH:MM' | 'HH:MM weekdays' | 'HH:MM weekends'
-  frequency: string;      // 'daily' | 'every2days' | 'every3days' | 'weekly' | 'biweekly'
   reviewRequired: boolean;
   platforms: string[];    // empty = all configured platforms
   githubRepo: string;     // owner/repo — used for catchup via GitHub API
@@ -23,7 +22,6 @@ export interface ProjectConfig {
 
 export const DEFAULT_CONFIG: ProjectConfig = {
   schedule: '05:00',
-  frequency: 'daily',
   reviewRequired: true,
   platforms: [],
   githubRepo: '',

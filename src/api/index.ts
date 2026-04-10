@@ -5,6 +5,7 @@ import { getActivity } from '../activity/log.js';
 import { getAllAccounts, addAccount, removeAccount, getAccountsByType } from '../store/accounts.js';
 import { getQueue, updateStatus, updateDraft, removeFromQueue, addPublishedPlatforms, type QueuedPost } from '../store/queue.js';
 import { getProjectConfig, setProjectConfig, getAllProjectConfigs, deleteProject, renameProject } from '../store/project-config.js';
+import { getSettings, updateSettings } from '../store/settings.js';
 import { fetchPhilosophy } from '../philosophy/client.js';
 import { getPostHistory } from '../store/post-history.js';
 import { runCatchup, fetchGitHubCommits } from '../pipeline/catchup.js';
@@ -224,9 +225,8 @@ router.get('/projects/:name', (req, res) => {
 });
 
 router.post('/projects/:name', requireAuth, (req, res) => {
-  const { schedule, frequency, reviewRequired, platforms, githubRepo, philosophy, voice, detailLevel, tagline, visibility, lastCatchupCommit } = req.body as {
+  const { schedule, reviewRequired, platforms, githubRepo, philosophy, voice, detailLevel, tagline, visibility, lastCatchupCommit } = req.body as {
     schedule?: string;
-    frequency?: string;
     reviewRequired?: boolean;
     platforms?: string[];
     githubRepo?: string;
@@ -237,7 +237,7 @@ router.post('/projects/:name', requireAuth, (req, res) => {
     visibility?: 'public' | 'private';
     lastCatchupCommit?: string;
   };
-  setProjectConfig(req.params.name, { schedule, frequency, reviewRequired, platforms, githubRepo, philosophy, voice, detailLevel, tagline, visibility, lastCatchupCommit });
+  setProjectConfig(req.params.name, { schedule, reviewRequired, platforms, githubRepo, philosophy, voice, detailLevel, tagline, visibility, lastCatchupCommit });
   res.json({ ok: true });
 });
 
@@ -316,6 +316,21 @@ router.post('/catchup', requireAuth, async (req, res) => {
       console.error('[catchup] Error:', err);
     }
   })();
+});
+
+// ── SETTINGS ─────────────────────────────────────────────────
+
+router.get('/settings', requireAuth, (_req, res) => {
+  res.json(getSettings());
+});
+
+router.post('/settings', requireAuth, (req, res) => {
+  const { postFrequencyDays } = req.body as { postFrequencyDays?: number };
+  if (postFrequencyDays !== undefined) {
+    const days = Math.max(1, Math.round(Number(postFrequencyDays)));
+    if (!isNaN(days)) updateSettings({ postFrequencyDays: days });
+  }
+  res.json(getSettings());
 });
 
 // ── ACTIVITY ─────────────────────────────────────────────────
