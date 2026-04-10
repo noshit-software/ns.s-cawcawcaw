@@ -6,6 +6,8 @@ Project names are normalized to uppercase everywhere — `getAllProjectConfigs()
 
 Ghost removed as a publishing target.
 
+Per-project publish frequency — daily, every 2/3 days, weekly, biweekly. Replaces global one-post/day rate limit.
+
 **Bugs fixed:**
 - Live webhook pipeline now looks up projects by `githubRepo` field instead of raw repo name — previously all live webhooks silently failed
 - Hashtags now appended to last thread chunk only (Bluesky, Mastodon)

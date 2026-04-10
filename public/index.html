@@ -762,6 +762,17 @@ function renderProjects() {
             <input class="pe-input" id="ps-schedule-${name}" value="${escAttr(cfg.schedule)}" placeholder="immediate / 09:00 / 09:00 weekdays" autocomplete="off" spellcheck="false" ${!authed ? 'disabled' : ''}/>
           </div>
           <div class="pe-field">
+            <span class="pe-label">FREQUENCY</span>
+            <span class="farrow">▸</span>
+            <select class="pe-input" id="ps-frequency-${name}" ${!authed ? 'disabled' : ''}>
+              <option value="daily" ${(cfg.frequency||'daily') === 'daily' ? 'selected' : ''}>DAILY</option>
+              <option value="every2days" ${cfg.frequency === 'every2days' ? 'selected' : ''}>EVERY 2 DAYS</option>
+              <option value="every3days" ${cfg.frequency === 'every3days' ? 'selected' : ''}>EVERY 3 DAYS</option>
+              <option value="weekly" ${cfg.frequency === 'weekly' ? 'selected' : ''}>WEEKLY</option>
+              <option value="biweekly" ${cfg.frequency === 'biweekly' ? 'selected' : ''}>BIWEEKLY</option>
+            </select>
+          </div>
+          <div class="pe-field">
             <span class="pe-label">REVIEW REQUIRED</span>
             <span class="farrow">▸</span>
             <div class="pe-toggle">
@@ -944,6 +955,7 @@ async function addProject() {
 
 async function saveProject(name) {
   const schedule = document.getElementById('ps-schedule-' + name).value.trim();
+  const frequency = document.getElementById('ps-frequency-' + name).value;
   const reviewRequired = document.getElementById('ps-review-' + name).checked;
   const platformEl = document.getElementById('ps-platforms-' + name);
   const platforms = platformEl ? [...platformEl.querySelectorAll('input[type=checkbox]:checked')].map(c => c.value) : [];
@@ -957,7 +969,7 @@ async function saveProject(name) {
   try {
     const res = await fetch('/api/projects/' + encodeURIComponent(name), {
       method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ schedule, reviewRequired, platforms, githubRepo, philosophy, voice, detailLevel, tagline, visibility })
+      body: JSON.stringify({ schedule, frequency, reviewRequired, platforms, githubRepo, philosophy, voice, detailLevel, tagline, visibility })
     });
     if (!res.ok) throw new Error(await res.text());
     projectSavedState[name] = true;

@@ -224,8 +224,9 @@ router.get('/projects/:name', (req, res) => {
 });
 
 router.post('/projects/:name', requireAuth, (req, res) => {
-  const { schedule, reviewRequired, platforms, githubRepo, philosophy, voice, detailLevel, tagline, visibility, lastCatchupCommit } = req.body as {
+  const { schedule, frequency, reviewRequired, platforms, githubRepo, philosophy, voice, detailLevel, tagline, visibility, lastCatchupCommit } = req.body as {
     schedule?: string;
+    frequency?: string;
     reviewRequired?: boolean;
     platforms?: string[];
     githubRepo?: string;
@@ -236,7 +237,7 @@ router.post('/projects/:name', requireAuth, (req, res) => {
     visibility?: 'public' | 'private';
     lastCatchupCommit?: string;
   };
-  setProjectConfig(req.params.name, { schedule, reviewRequired, platforms, githubRepo, philosophy, voice, detailLevel, tagline, visibility, lastCatchupCommit });
+  setProjectConfig(req.params.name, { schedule, frequency, reviewRequired, platforms, githubRepo, philosophy, voice, detailLevel, tagline, visibility, lastCatchupCommit });
   res.json({ ok: true });
 });
 
