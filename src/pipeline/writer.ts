@@ -98,7 +98,7 @@ Your job is to decide when the story is ready to tell. You see all commits since
 
 When you publish, follow these rules:
 - No code snippets, no function names, no file paths
-- Detail level: ${detailLevel || 'high-level'} — ${detailLevel === 'technical' ? 'you may reference architecture and design decisions' : detailLevel === 'moderate' ? 'mention what was built but not how' : 'the story is the why, not the what. No implementation details.'}
+- Detail level: ${detailLevel || 'narrative'} — ${detailLevel === 'technical' ? 'you may reference architecture and design decisions — go into how it is actually built' : detailLevel === 'conceptual' ? 'describe what it is and how it works at the product and experience level — explain the mechanics and UX without touching implementation' : 'pure narrative — sell the vision and the feeling. Do NOT describe what the product does or how it works. Problem, premise, and bet only.'}
 - No sensitive information: no API keys, internal URLs, team names, credentials
 - Write as if continuing a story, not announcing a release
 - Voice: ${voice || 'First person singular ("I", never "we"). Present tense. Confident but not arrogant.'}
@@ -186,7 +186,7 @@ ${philosophy.narrativeArc ? `Narrative arc:\n${philosophy.narrativeArc}` : ''}
 Rewrite rules:
 - Keep the same story and philosophy point — just rewrite the voice and detail level
 - No code snippets, no function names, no file paths
-- Detail level: ${detailLevel || 'high-level'} — ${detailLevel === 'technical' ? 'you may reference architecture and design decisions' : detailLevel === 'moderate' ? 'mention what was built but not how' : 'the story is the why, not the what. No implementation details.'}
+- Detail level: ${detailLevel || 'narrative'} — ${detailLevel === 'technical' ? 'you may reference architecture and design decisions — go into how it is actually built' : detailLevel === 'conceptual' ? 'describe what it is and how it works at the product and experience level — explain the mechanics and UX without touching implementation' : 'pure narrative — sell the vision and the feeling. Do NOT describe what the product does or how it works. Problem, premise, and bet only.'}
 - Voice: ${voice || 'First person singular ("I", never "we"). Present tense. Confident but not arrogant.'}
 - No corporate speak
 - No bullet points in the body
@@ -255,7 +255,7 @@ ${philosophy.narrativeArc ? `Narrative arc:\n${philosophy.narrativeArc}` : ''}
 ${historyBlock}Rules:
 - This is an origin story. Why does this project exist? What problem did you see? What did you do about it?
 - No code snippets, no function names, no file paths
-- Detail level: ${detailLevel || 'high-level'} — ${detailLevel === 'technical' ? 'you may reference architecture and design decisions' : detailLevel === 'moderate' ? 'mention what was built but not how' : 'the story is the why, not the what. No implementation details.'}
+- Detail level: ${detailLevel || 'narrative'} — ${detailLevel === 'technical' ? 'you may reference architecture and design decisions — go into how it is actually built' : detailLevel === 'conceptual' ? 'describe what it is and how it works at the product and experience level — explain the mechanics and UX without touching implementation' : 'pure narrative — sell the vision and the feeling. Do NOT describe what the product does or how it works. Problem, premise, and bet only.'}
 - Voice: ${voice || 'First person singular ("I", never "we"). Present tense. Confident but not arrogant.'}
 - No corporate speak: never say "excited to share", "thrilled to announce", "proud to present"
 - No bullet points in the body

@@ -513,7 +513,7 @@ async function loadQueue() {
       const tags = Array.isArray(post.draft.tags) ? post.draft.tags : [];
       const tagline = projectConfigs[post.project]?.tagline || '';
       const voice = projectConfigs[post.project]?.voice || 'default';
-      const detailLevel = projectConfigs[post.project]?.detailLevel || 'high-level';
+      const detailLevel = projectConfigs[post.project]?.detailLevel || 'narrative';
       return `
         <div class="queue-entry ${isExpanded ? 'expanded' : ''}" id="qe-${post.id}" onclick="toggleQueue('${post.id}')">
           <div class="qe-header">
@@ -804,8 +804,8 @@ function renderProjects() {
             <span class="pe-label">DETAIL LEVEL</span>
             <span class="farrow">▸</span>
             <select class="pe-input" id="ps-detaillevel-${name}" style="background:var(--bg);color:var(--fg);border:1px solid var(--dim);padding:.3rem;font-family:inherit;font-size:inherit">
-              <option value="high-level" ${cfg.detailLevel === 'high-level' ? 'selected' : ''}>HIGH-LEVEL — why, not what</option>
-              <option value="moderate" ${cfg.detailLevel === 'moderate' ? 'selected' : ''}>MODERATE — what was built, not how</option>
+              <option value="narrative" ${cfg.detailLevel === 'narrative' || cfg.detailLevel === 'high-level' ? 'selected' : ''}>NARRATIVE — vision and feeling, not what it does</option>
+              <option value="conceptual" ${cfg.detailLevel === 'conceptual' || cfg.detailLevel === 'moderate' ? 'selected' : ''}>CONCEPTUAL — what it is and how it works at the product level</option>
               <option value="technical" ${cfg.detailLevel === 'technical' ? 'selected' : ''}>TECHNICAL — architecture and design decisions</option>
             </select>
           </div>

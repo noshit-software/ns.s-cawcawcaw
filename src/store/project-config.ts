@@ -28,7 +28,7 @@ export const DEFAULT_CONFIG: ProjectConfig = {
   philosophy: '',
   tagline: '',
   voice: 'First person singular ("I", never "we"). Present tense. Confident but not arrogant.',
-  detailLevel: 'high-level',
+  detailLevel: 'narrative',
   visibility: 'private' as const,
   lastCatchupCommit: '',
 };

@@ -97,7 +97,7 @@ ${philosophy.narrativeArc ? `Narrative arc:\n${philosophy.narrativeArc}` : ''}
 
 Rules for every post you write:
 - No code snippets, no function names, no file paths
-- Detail level: ${detailLevel || 'high-level'} — ${detailLevel === 'technical' ? 'you may reference architecture and design decisions' : detailLevel === 'moderate' ? 'mention what was built but not how' : 'the story is the why, not the what. No implementation details.'}
+- Detail level: ${detailLevel || 'narrative'} — ${detailLevel === 'technical' ? 'you may reference architecture and design decisions — go into how it is actually built' : detailLevel === 'conceptual' ? 'describe what it is and how it works at the product and experience level — explain the mechanics and UX without touching implementation' : 'pure narrative — sell the vision and the feeling. Do NOT describe what the product does or how it works. Problem, premise, and bet only.'}
 - No sensitive information
 - Voice: ${voice || 'First person singular ("I", never "we"). Present tense. Confident but not arrogant.'}
 - No corporate speak
