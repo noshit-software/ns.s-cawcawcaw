@@ -121,7 +121,7 @@ The OAuth flow handles everything — access token, refresh token, author URN. A
 | **GitHub repo** | `owner/repo` format. Used for catchup via GitHub API. Hit **TEST** to verify. |
 | **Philosophy** | The project's guiding philosophy. Tells Claude what story you're telling and why. |
 | **Voice** | Writing perspective per project. Default: first person singular, present tense, confident. Override for different tones. |
-| **Detail level** | Controls what kind of story is told. `narrative` = vision and feeling only, no description of what it does. `conceptual` = explains what it is and how it works at the product/experience level. `technical` = architecture and design decisions. |
+| **Detail level** | Controls what kind of story is told. `narrative` = problem and idea only — no product name, no description of what it does, no UX. `conceptual` = explains what it is and how it works at the product/experience level. `technical` = architecture and design decisions. |
 | **Tagline** | Appended to every post at publish time. |
 | **Visibility** | `private` (default) or `public`. Public projects and their queue items are visible to unauthenticated visitors. Private projects are completely hidden without login. |
 
