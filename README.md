@@ -266,14 +266,6 @@ When enabled:
 - **Demo banner** — visible to unauthenticated visitors, indicates read-only mode.
 - Session is cookie-based, expires after 7 days. Login prompt is in the header.
 
-### Migrations
-
-```bash
-npx tsx scripts/migrate-detail-levels.ts
-```
-
-Renames `high-level` → `narrative` and `moderate` → `conceptual` in `data/projects.json`. Run once on the server after deploying the detail level rename.
-
 Runtime data in `data/` — back it up. Specifically:
 - `credentials.json` — OAuth tokens
 - `projects.json` — project configs
