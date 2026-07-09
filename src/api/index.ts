@@ -9,6 +9,7 @@ import { getSettings, updateSettings } from '../store/settings.js';
 import { fetchPhilosophy } from '../philosophy/client.js';
 import { getPostHistory } from '../store/post-history.js';
 import { runCatchup, fetchGitHubCommits } from '../pipeline/catchup.js';
+import { getGitHubToken } from '../github/tokens.js';
 import { enqueue } from '../store/queue.js';
 import { updateNotes } from '../store/commit-buffer.js';
 import { publishNow } from '../pipeline/scheduler.js';
@@ -260,7 +261,7 @@ router.get('/test-repo', requireAuth, async (req, res) => {
   if (!repo) { res.status(400).json({ error: 'No repo specified' }); return; }
   try {
     const headers: Record<string, string> = { Accept: 'application/vnd.github+json' };
-    const ghToken = process.env.GITHUB_TOKEN;
+    const ghToken = getGitHubToken(repo);
     if (ghToken) headers.Authorization = `Bearer ${ghToken}`;
     const r = await fetch(`https://api.github.com/repos/${repo}`, { headers });
     if (!r.ok) throw new Error(`${r.status} — ${r.statusText}`);

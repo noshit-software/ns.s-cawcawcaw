@@ -3,6 +3,7 @@ import { type ProjectPhilosophy } from '../philosophy/client.js';
 import { type PostDraft } from '../publishers/types.js';
 import { type CommitSummary } from '../webhook/github.js';
 import { type PostRecord } from '../store/post-history.js';
+import { getGitHubToken } from '../github/tokens.js';
 
 export interface CatchupCommit {
   message: string;
@@ -168,7 +169,7 @@ export async function fetchGitHubCommits(repo: string, sinceSha?: string): Promi
     // No date filter — we filter by SHA match below
 
     const headers: Record<string, string> = { Accept: 'application/vnd.github+json' };
-    const ghToken = process.env.GITHUB_TOKEN;
+    const ghToken = getGitHubToken(repo);
     if (ghToken) headers.Authorization = `Bearer ${ghToken}`;
 
     const res = await fetch(url.toString(), { headers });

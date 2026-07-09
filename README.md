@@ -140,7 +140,7 @@ For repos with existing history — run catchup to generate a backlog of drafts 
 
 **Gotcha:** First catchup on an active repo can generate a lot of posts. Review required is ON by default, so nothing goes out without you. But if you turned it OFF — fix that first.
 
-**Gotcha:** Catchup uses the GitHub API, not webhooks. It needs a `GITHUB_TOKEN` in `.env` for private repos. Public repos work without one but will hit rate limits faster.
+**Gotcha:** Catchup uses the GitHub API, not webhooks. It needs `GITHUB_TOKENS` set in `.env` for private repos — a JSON object mapping repo owner to PAT, e.g. `GITHUB_TOKENS={"my-account":"ghp_xxx","some-other-account":"ghp_yyy"}`. One entry per GitHub account/org your projects use, including your primary one — there's no separate fallback token. Public repos work without any entry but will hit rate limits faster. Catchup and the repo TEST button look up the token by the repo's owner.
 
 **RESET CATCHUP** clears the commit history marker so the next catchup regenerates all posts from scratch. Use this if you deleted posts from the queue and want to regenerate them.
 
