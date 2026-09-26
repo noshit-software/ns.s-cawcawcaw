@@ -243,6 +243,7 @@
         </select>
         <select id="queue-status-filter" onchange="loadQueue()" style="background:transparent;border:none;border-bottom:1px solid var(--dim);color:var(--dim);font:inherit;text-shadow:inherit;outline:none;cursor:pointer;font-size:.85em">
           <option value="">ALL STATUSES</option>
+          <option value="queued">QUEUED</option>
           <option value="pending_review">PENDING REVIEW</option>
           <option value="approved">APPROVED</option>
           <option value="published">PUBLISHED</option>
@@ -476,7 +477,8 @@ async function loadQueue() {
     const [qRes, pRes] = await Promise.all([fetch(url), fetch('/api/projects')]);
     let posts = await qRes.json();
     const projectConfigs = await pRes.json();
-    if (status) posts = posts.filter(p => p.status === status);
+    if (status === 'queued') posts = posts.filter(p => p.status === 'pending_review' || p.status === 'approved');
+    else if (status) posts = posts.filter(p => p.status === status);
 
     // Populate project filter from projects list, not filtered queue
     const allProjects = Object.keys(projectConfigs).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
