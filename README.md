@@ -144,6 +144,8 @@ For repos with existing history — run catchup to generate a backlog of drafts 
 
 **RESET CATCHUP** clears the commit history marker so the next catchup regenerates all posts from scratch. Use this if you deleted posts from the queue and want to regenerate them.
 
+**Data backups**: `scripts/backup-data.sh` backs up the `data/` directory with a timestamp, keeping the 5 most recent. Install on the server with a daily cron: `0 3 * * * /opt/ns.s/ns.s-cawcawcaw/scripts/backup-data.sh >> /opt/ns.s/ns.s-cawcawcaw/backups/backup.log 2>&1`
+
 A red warning banner now appears at the top of the UI when a platform that previously published successfully is no longer connected, or when no platforms are configured at all. Click to dismiss. Checked on every page load.
 
 Queue entries now track a `publishedAt` timestamp (set when the post first reaches any platform). Displayed alongside `createdAt` in the queue view.
