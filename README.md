@@ -144,6 +144,8 @@ For repos with existing history — run catchup to generate a backlog of drafts 
 
 **RESET CATCHUP** clears the commit history marker so the next catchup regenerates all posts from scratch. Use this if you deleted posts from the queue and want to regenerate them.
 
+A red warning banner now appears at the top of the UI when a platform that previously published successfully is no longer connected, or when no platforms are configured at all. Click to dismiss. Checked on every page load.
+
 Queue entries now track a `publishedAt` timestamp (set when the post first reaches any platform). Displayed alongside `createdAt` in the queue view.
 
 **REQUEUE FAILED POSTS** (in [5] SYSTEM → Maintenance) finds all posts marked "published" that never actually reached any platform (e.g. if LinkedIn was disconnected) and sends them back to `pending_review`. Safe to run anytime — only touches posts with an empty publish record.

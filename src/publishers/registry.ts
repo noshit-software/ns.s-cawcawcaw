@@ -36,3 +36,7 @@ const ALL_ADAPTERS: PublisherAdapter[] = [
 export function getEnabledAdapters(): PublisherAdapter[] {
   return ALL_ADAPTERS.filter(a => a.isConfigured());
 }
+
+export function getAllAdapters(): PublisherAdapter[] {
+  return ALL_ADAPTERS;
+}

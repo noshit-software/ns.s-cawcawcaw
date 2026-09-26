@@ -203,6 +203,8 @@
     </span>
   </div>
 
+  <div id="health-banner" style="display:none;background:#ff4444;color:#000;padding:.5rem 1rem;font-size:.85em;font-weight:bold;letter-spacing:.05em;cursor:pointer" onclick="this.style.display='none'" title="Click to dismiss"></div>
+
   <div class="tabs">
     <button class="tab active" data-tab="platforms" onclick="switchTab('platforms')"><span class="k">[1]</span>PLATFORMS</button>
     <button class="tab" data-tab="queue" onclick="switchTab('queue')"><span class="k">[2]</span>QUEUE</button>
@@ -1238,10 +1240,23 @@ async function doLogout() {
   updatePendingBadge();
 }
 
+async function checkHealth() {
+  try {
+    const res = await fetch('/api/health');
+    if (!res.ok) return;
+    const d = await res.json();
+    if (!d.ok && d.warnings?.length) {
+      const banner = document.getElementById('health-banner');
+      banner.textContent = '⚠ ' + d.warnings.join('  ·  ') + '  (click to dismiss)';
+      banner.style.display = 'block';
+    }
+  } catch {}
+}
+
 // ── INIT ──────────────────────────────────────────────────────
 (async () => {
   await checkAuth();
-  if (authed || !authRequired) loadPlatforms();
+  if (authed || !authRequired) { loadPlatforms(); checkHealth(); }
   switchTab(currentTab);
   updatePendingBadge();
 })();

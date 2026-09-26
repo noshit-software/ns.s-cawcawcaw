@@ -15,9 +15,28 @@ import { updateNotes } from '../store/commit-buffer.js';
 import { publishNow } from '../pipeline/scheduler.js';
 import { regenerate } from '../pipeline/writer.js';
 import { isAuthenticated, requireAuth } from '../auth/session.js';
+import { getAllAdapters } from '../publishers/registry.js';
 
 const router = Router();
 router.use(json());
+
+// ── HEALTH ───────────────────────────────────────────────────
+
+router.get('/health', requireAuth, (_req, res) => {
+  const adapters = getAllAdapters();
+  const configuredNames = new Set(adapters.filter(a => a.isConfigured()).map(a => a.platform));
+
+  // Platforms that have ever successfully published but are no longer configured
+  const allPosts = getQueue();
+  const everPublished = new Set(allPosts.flatMap(p => p.publishedTo ?? []));
+  const disconnected = [...everPublished].filter(p => !configuredNames.has(p));
+
+  const warnings: string[] = [];
+  if (configuredNames.size === 0) warnings.push('No platforms are configured — posts will not be published.');
+  for (const p of disconnected) warnings.push(`${p} was previously publishing but is no longer connected.`);
+
+  res.json({ ok: warnings.length === 0, warnings, configuredCount: configuredNames.size });
+});
 
 // ── PLATFORMS (auth required — never public) ─────────────────
 
