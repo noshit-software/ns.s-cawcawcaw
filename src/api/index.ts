@@ -149,6 +149,13 @@ router.patch('/queue/:id', requireAuth, (req, res) => {
   res.json({ ok: true });
 });
 
+router.post('/queue/requeue-failed', requireAuth, (req, res) => {
+  const all = getQueue();
+  const failed = all.filter(p => p.status === 'published' && (!p.publishedTo || p.publishedTo.length === 0));
+  for (const p of failed) updateStatus(p.id, 'pending_review');
+  res.json({ ok: true, count: failed.length });
+});
+
 router.post('/queue/batch', requireAuth, (req, res) => {
   const { ids, action } = req.body as { ids: string[]; action: string };
   if (!Array.isArray(ids) || !action) { res.status(400).json({ error: 'ids and action required' }); return; }

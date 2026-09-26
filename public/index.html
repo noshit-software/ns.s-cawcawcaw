@@ -279,6 +279,11 @@
     <div id="sys-info"><div class="empty">LOADING...</div></div>
     <div class="slabel" style="margin-top:1.5rem">PUBLISH SETTINGS</div>
     <div id="sys-settings"><div class="empty">LOADING...</div></div>
+    <div class="slabel" style="margin-top:1.5rem">MAINTENANCE</div>
+    <div style="display:flex;gap:.8rem;align-items:center;flex-wrap:wrap">
+      <button class="btn" onclick="requeueFailed()">REQUEUE FAILED POSTS</button>
+      <span id="requeue-result" style="font-size:.85em;color:var(--dim)"></span>
+    </div>
   </div>
 
 </div>
@@ -717,6 +722,16 @@ async function markPublished(id) {
     const res = await fetch('/api/queue/' + id + '/mark-published', {method:'POST'});
     if (!res.ok) { const d = await res.json(); alert('Failed: ' + d.error); return; }
     await loadQueue();
+  } catch(e) { console.error(e); }
+}
+
+async function requeueFailed() {
+  if (!confirm('Requeue all published posts that never reached any platform?')) return;
+  try {
+    const res = await fetch('/api/queue/requeue-failed', {method:'POST'});
+    const d = await res.json();
+    document.getElementById('requeue-result').textContent = d.ok ? `${d.count} post${d.count === 1 ? '' : 's'} requeued` : ('Error: ' + d.error);
+    if (d.ok && d.count > 0) await loadQueue();
   } catch(e) { console.error(e); }
 }
 
