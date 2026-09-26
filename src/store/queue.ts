@@ -17,6 +17,7 @@ export interface QueuedPost {
   publishedTo: string[]; // which platforms have already published this post
   createdAt: string;
   updatedAt: string;
+  publishedAt?: string;  // when first successfully published to any platform
 }
 
 type Store = QueuedPost[];
@@ -103,6 +104,7 @@ export function addPublishedPlatforms(postId: string, platforms: string[]): void
   if (!post) return;
   const existing = post.publishedTo ?? [];
   post.publishedTo = [...new Set([...existing, ...platforms])];
+  if (!post.publishedAt) post.publishedAt = new Date().toISOString();
   post.updatedAt = new Date().toISOString();
   save(store);
 }

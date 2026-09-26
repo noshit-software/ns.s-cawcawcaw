@@ -534,7 +534,8 @@ async function loadQueue() {
             <span class="qe-status ${post.status}">${post.status.replace('_',' ').toUpperCase()}</span>
           </div>
           <div class="qe-meta">
-            <span>${date} ${time}</span>
+            <span>CREATED: ${date} ${time}</span>
+            ${post.publishedAt ? `<span>PUBLISHED: ${new Date(post.publishedAt).toLocaleDateString('en-US',{month:'2-digit',day:'2-digit'})} ${new Date(post.publishedAt).toLocaleTimeString('en-US',{hour12:false,hour:'2-digit',minute:'2-digit'})}</span>` : ''}
             <span>${post.source.toUpperCase()}</span>
             <span>${platforms}</span>
             ${(post.publishedTo && post.publishedTo.length > 0) ? `<span style="color:var(--accent)">SENT: ${post.publishedTo.map(p=>p.toUpperCase()).join(', ')}</span>` : ''}
