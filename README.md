@@ -148,7 +148,7 @@ A red warning banner now appears at the top of the UI when a platform that previ
 
 Queue entries now track a `publishedAt` timestamp (set when the post first reaches any platform). Displayed alongside `createdAt` in the queue view.
 
-**REQUEUE FAILED POSTS** (in [5] SYSTEM → Maintenance) finds all posts marked "published" that never actually reached any platform (e.g. if LinkedIn was disconnected) and sends them back to `pending_review`. Safe to run anytime — only touches posts with an empty publish record.
+**REQUEUE FAILED POSTS** (in [5] SYSTEM → Maintenance) finds all posts marked "published" that never actually reached any platform (e.g. if LinkedIn was disconnected) and restores them to `approved` so the scheduler picks them up automatically. Safe to run anytime — only touches posts with an empty publish record.
 
 **COMPOSE INTRO** generates an introductory post from the project philosophy alone — no commits needed. Use this for the first post when you want an origin story, not a commit summary.
 

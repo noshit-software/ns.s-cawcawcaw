@@ -171,7 +171,7 @@ router.patch('/queue/:id', requireAuth, (req, res) => {
 router.post('/queue/requeue-failed', requireAuth, (req, res) => {
   const all = getQueue();
   const failed = all.filter(p => p.status === 'published' && (!p.publishedTo || p.publishedTo.length === 0));
-  for (const p of failed) updateStatus(p.id, 'pending_review');
+  for (const p of failed) updateStatus(p.id, 'approved');
   res.json({ ok: true, count: failed.length });
 });
 
